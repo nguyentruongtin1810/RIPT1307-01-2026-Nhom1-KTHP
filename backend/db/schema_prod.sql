@@ -1,0 +1,85 @@
+-- Production-ready University Admission Management System schema
+
+CREATE DATABASE IF NOT EXISTS university_admission_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE university_admission_prod;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(80) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  role ENUM('student','admin') NOT NULL DEFAULT 'student',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS candidates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL UNIQUE,
+  full_name VARCHAR(255) NOT NULL,
+  phone VARCHAR(30),
+  gender ENUM('male','female','other') DEFAULT 'other',
+  dob DATE,
+  id_card_number VARCHAR(50) UNIQUE,
+  priority_group VARCHAR(100) DEFAULT 'None',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS universities (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(30) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  logo_url VARCHAR(2048),
+  address VARCHAR(512),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS majors (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  university_id INT NOT NULL,
+  code VARCHAR(40) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  quota INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (university_id) REFERENCES universities(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS subject_groups (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(10) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS major_subject_groups (
+  major_id INT NOT NULL,
+  subject_group_id INT NOT NULL,
+  PRIMARY KEY (major_id, subject_group_id),
+  FOREIGN KEY (major_id) REFERENCES majors(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (subject_group_id) REFERENCES subject_groups(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS applications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  candidate_id INT NOT NULL,
+  major_id INT NOT NULL,
+  subject_group_id INT NOT NULL,
+  scores JSON NOT NULL,
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  rejection_reason VARCHAR(1024),
+  document_url VARCHAR(2048),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (major_id) REFERENCES majors(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  FOREIGN KEY (subject_group_id) REFERENCES subject_groups(id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_app_candidate ON applications(candidate_id);
+CREATE INDEX idx_app_major ON applications(major_id);
+CREATE INDEX idx_app_subject_group ON applications(subject_group_id);
+CREATE INDEX idx_majors_university ON majors(university_id);

@@ -1,0 +1,21 @@
+# Thư mục chứa thư viện (Cực kỳ nặng, không được push)
+node_modules/
+dist/
+build/
+.yarn/
+
+# Các file cấu hình bảo mật cá nhân (Tuyệt đối không lên Git)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# File rác tự sinh của hệ điều hành
+.DS_Store
+Thumbs.db
+
+# File log khi chạy lỗi
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

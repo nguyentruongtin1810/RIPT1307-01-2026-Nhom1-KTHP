@@ -1,0 +1,37 @@
+import api from "./axiosConfig";
+
+export type AuthPayload = {
+  email: string;
+  password: string;
+};
+
+export type RegisterPayload = AuthPayload & {
+  fullName: string;
+  phone?: string;
+  address?: string;
+};
+
+export type AuthResponse = {
+  token: string;
+  user: {
+    id: number;
+    role: string;
+    fullName: string;
+    email: string;
+  };
+};
+
+export async function login(payload: AuthPayload) {
+  const response = await api.post<AuthResponse>("/auth/login", payload);
+  return response.data;
+}
+
+export async function register(payload: RegisterPayload) {
+  const response = await api.post<AuthResponse>("/auth/register", payload);
+  return response.data;
+}
+
+export async function getMe() {
+  const response = await api.get<{ id: number; role: string; fullName: string; email: string }>("/auth/me");
+  return response.data;
+}

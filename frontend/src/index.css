@@ -1,0 +1,25 @@
+@import "antd/dist/reset.css";
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #f0f2f5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card,
+.page-card {
+  width: 100%;
+  max-width: 760px;
+}
