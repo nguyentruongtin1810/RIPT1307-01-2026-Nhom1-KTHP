@@ -1,35 +1,48 @@
-const TOKEN_KEY = "admission_token";
-const USER_KEY = "admission_user";
-const ROLE_KEY = "admission_role";
+// --- QUẢN LÝ ACCESS TOKEN ---
+export const getToken = (): string | null => {
+  return localStorage.getItem("token");
+};
 
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
+export const setToken = (token: string): void => {
+  localStorage.setItem("token", token);
+};
 
-export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-}
+export const removeToken = (): void => {
+  localStorage.removeItem("token");
+};
 
-export function removeToken() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(ROLE_KEY);
-}
+// --- QUẢN LÝ QUYỀN HẠN (USER ROLE) ---
+export const getUserRole = (): string => {
+  return localStorage.getItem("role") || "";
+};
 
-export function setUser(user: { id: number; role: string; fullName: string; email: string }) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-  localStorage.setItem(ROLE_KEY, user.role);
-}
+export const setUserRole = (role: string): void => {
+  localStorage.setItem("role", role);
+};
 
-export function getUser() {
-  const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
-}
+export const removeUserRole = (): void => {
+  localStorage.removeItem("role");
+};
 
-export function getUserRole() {
-  return localStorage.getItem(ROLE_KEY);
-}
+// --- SỬA DỨT ĐIỂM TẠI ĐÂY ---
+// Chuyển kiểu dữ liệu nhận vào thành 'any' để chấp nhận cả Object User từ CandidateAuthPage gửi sang
+export const setUser = (user: any): void => {
+  if (user && typeof user === "object") {
+    localStorage.setItem("user", JSON.stringify(user));
+    if (user.role) {
+      localStorage.setItem("role", user.role);
+    }
+  } else if (typeof user === "string") {
+    localStorage.setItem("user", user);
+  }
+};
 
-export function clearAuth() {
-  removeToken();
-}
+// Hàm bổ sung giúp lấy thông tin User ra khi cần (ví dụ hiển thị tên ở Dashboard)
+export const getUser = (): any => {
+  const user = localStorage.getItem("user");
+  try {
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
+};
