@@ -16,6 +16,7 @@ export default function CandidateAuthPage() {
     try {
       const response = isRegister
         ? await register({
+            username: values.email,
             fullName: values.fullName,
             email: values.email,
             password: values.password
@@ -29,7 +30,7 @@ export default function CandidateAuthPage() {
       setUser(response.user);
 
       message.success(isRegister ? "Đăng ký thành công. Bạn đã được đăng nhập." : "Đăng nhập thành công.");
-      navigate("/candidate/application");
+      navigate("/student/dashboard");
     } catch (error: any) {
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
@@ -87,9 +88,9 @@ export default function CandidateAuthPage() {
         </Text>
 
         <div style={{ marginTop: 16 }}>
-          <Link to="/candidate/application">Đi tới Đăng ký xét tuyển</Link>
+          <Link to="/student/apply">Đi tới Nộp hồ sơ</Link>
           <br />
-          <Link to="/candidate/tracking">Theo dõi hồ sơ</Link>
+          <Link to="/student/status">Theo dõi hồ sơ</Link>
         </div>
       </Card>
     </div>

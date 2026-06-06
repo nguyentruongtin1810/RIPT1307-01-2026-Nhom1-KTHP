@@ -1,6 +1,6 @@
 import { Button, Card, Layout, Menu, Select, Space, Table, Tag, Typography, message } from "antd";
 import { useEffect, useMemo, useState } from "react";
-import { fetchApplications, updateApplicationStatus } from "../../api/adminApi";
+import { fetchApplications, changeApplicationStatus } from "../../api/adminApi";
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
   const updateStatus = async (id: number, status: string) => {
     setUpdatingId(id);
     try {
-      const updated = await updateApplicationStatus(id, status);
+      const updated = await changeApplicationStatus(id, status.toLowerCase());
       setApplications((current) =>
         current.map((item) => (item.application_id === id ? updated : item))
       );
