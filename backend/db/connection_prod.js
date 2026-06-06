@@ -1,8 +1,6 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
-
 dotenv.config();
-
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST || "localhost",
   port: Number(process.env.MYSQL_PORT || 3306),
@@ -30,3 +28,4 @@ module.exports = {
   pool,
   testConnection
 };
+// To test the connection when this module is loaded
