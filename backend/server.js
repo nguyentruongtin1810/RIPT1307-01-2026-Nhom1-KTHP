@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { initializeDatabase } = require("./config/db");
+const candidateRoutes =require("./routes/candidateRoutes");
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const universityRoutes = require("./routes/universityRoutes");
@@ -22,6 +23,7 @@ app.use("/api/student", studentRoutes);
 app.use("/api/universities", universityRoutes);
 app.use("/api/majors", majorRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/candidate", candidateRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (req, res) => {

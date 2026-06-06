@@ -1,6 +1,10 @@
 const express = require("express");
 const { submitApplication, getApplicationStatus, getProfile } = require("../controllers/candidateController");
-const { requireAuth, requireRole } = require("../middlewares/authMiddleware");
+const { requireAuth } =
+require("../middlewares/authMiddleware");
+
+const { requireRole } =
+require("../middlewares/roleMiddleware");
 
 const router = express.Router();
 router.use(requireAuth, requireRole("student"));

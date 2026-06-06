@@ -1,4 +1,4 @@
-// --- QUẢN LÝ ACCESS TOKEN ---
+// frontend/src/utils/auth.ts
 export const getToken = (): string | null => {
   return localStorage.getItem("token");
 };
@@ -11,9 +11,8 @@ export const removeToken = (): void => {
   localStorage.removeItem("token");
 };
 
-// --- QUẢN LÝ QUYỀN HẠN (USER ROLE) ---
-export const getUserRole = (): string => {
-  return localStorage.getItem("role") || "";
+export const getUserRole = (): string | null => {
+  return localStorage.getItem("role");
 };
 
 export const setUserRole = (role: string): void => {
@@ -24,25 +23,39 @@ export const removeUserRole = (): void => {
   localStorage.removeItem("role");
 };
 
-// --- SỬA DỨT ĐIỂM TẠI ĐÂY ---
-// Chuyển kiểu dữ liệu nhận vào thành 'any' để chấp nhận cả Object User từ CandidateAuthPage gửi sang
-export const setUser = (user: any): void => {
-  if (user && typeof user === "object") {
-    localStorage.setItem("user", JSON.stringify(user));
-    if (user.role) {
-      localStorage.setItem("role", user.role);
-    }
-  } else if (typeof user === "string") {
-    localStorage.setItem("user", user);
-  }
+export const isAuthenticated = (): boolean => {
+  return !!getToken();
 };
 
-// Hàm bổ sung giúp lấy thông tin User ra khi cần (ví dụ hiển thị tên ở Dashboard)
-export const getUser = (): any => {
-  const user = localStorage.getItem("user");
-  try {
-    return user ? JSON.parse(user) : null;
-  } catch {
-    return null;
-  }
+export const isAdmin = (): boolean => {
+  return getUserRole() === "admin";
+};
+
+export const isStudent = (): boolean => {
+  return getUserRole() === "student";
+};
+
+export const clearAuth = (): void => {
+  removeToken();
+  removeUserRole();
+
+  localStorage.removeItem("fullName");
+  localStorage.removeItem("email");
+};
+
+// Hàm lấy thông tin user từ localStorage
+export const getUser = () => {
+  return {
+    fullName: localStorage.getItem("fullName") || "Thí sinh",
+    email: localStorage.getItem("email") || "student@example.com",
+    role: getUserRole() || "student"
+  };
+};
+
+// Hàm bổ sung cho AdminAuthPage
+export const setUser = (userData: any): void => {
+  if (userData?.token) setToken(userData.token);
+  if (userData?.role) setUserRole(userData.role);
+  if (userData?.fullName) localStorage.setItem("fullName", userData.fullName);
+  if (userData?.email) localStorage.setItem("email", userData.email);
 };

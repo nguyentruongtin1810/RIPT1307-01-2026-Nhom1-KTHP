@@ -1,153 +1,303 @@
-import { Button, Card, Form, Input, message, Typography, Row, Col, Tabs } from "antd";
-import { useState } from "react";
+// frontend/src/pages/candidate/CandidateAuthPage.tsx
+
+import React, { useState } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  message,
+  Tabs,
+} from "antd";
+import {
+  MailOutlined,
+  LockOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import { login, register } from "../../api/authApi";
-import { setToken, setUser } from "../../utils/auth";
 
 const { Title, Text } = Typography;
 
 export default function CandidateAuthPage() {
-  const [isRegister, setIsRegister] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const onFinish = async (values: any) => {
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
+
+  const handleLogin = async (values: any) => {
     setLoading(true);
+
     try {
-      if (isRegister) {
-        const response = await register({
-          username: values.username,
-          fullName: values.fullName,
-          email: values.email,
-          password: values.password,
-          phone: values.phone
-        });
-        message.success("Đăng ký tài khoản thành công! Vui lòng đăng nhập.");
-        setIsRegister(false);
-        form.resetFields();
-      } else {
-        const response: any = await login({
-          identifier: values.email_or_username, 
-          password: values.password
-        });
+      const data = await login({
+        identifier: values.email,
+        password: values.password,
+      });
 
-        if (response && response.token) {
-          setToken(response.token);
-          setUser(response.user);
-          message.success("Đăng nhập hệ thống thành công.");
+      if (data?.token) {
+  localStorage.setItem("token", data.token);
 
-          // Token-based Auth: Tự động nhận diện quyền để chuyển hướng về đúng phân hệ trong module
-          if (response.user?.role === "admin") {
-            navigate("/admin/dashboard");
-          } else {
-            navigate("/student/dashboard");
-          }
-        }
+  localStorage.setItem(
+    "role",
+    data.user?.role || "student"
+  );
+
+  localStorage.setItem(
+    "fullName",
+    data.user?.fullName || ""
+  );
+
+  localStorage.setItem(
+    "email",
+    data.user?.email || ""
+  );
+
+        message.success("Đăng nhập thành công!");
+
+        setTimeout(() => {
+          const role = data.user?.role || "student";
+
+          navigate(
+            role === "admin"
+              ? "/admin/dashboard"
+              : "/student/dashboard"
+          );
+        }, 500);
       }
-    } catch (error: any) {
-      message.error(error.message || "Xác thực thất bại. Vui lòng kiểm tra lại thông tin.");
+    } catch (err: any) {
+      message.error(err?.message || "Sai tài khoản hoặc mật khẩu");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRegister = async (values: any) => {
+    setLoading(true);
+
+    try {
+      await register(values);
+
+      message.success("Đăng ký thành công!");
+      setActiveTab("login");
+    } catch (err: any) {
+      message.error(err?.message || "Đăng ký thất bại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tabItems = [
+    {
+      key: "login",
+      label: "Đăng nhập",
+      children: (
+        <Form
+          layout="vertical"
+          onFinish={handleLogin}
+          size="large"
+        >
+          <Form.Item
+            name="email"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập email",
+              },
+            ]}
+          >
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="Email"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập mật khẩu",
+              },
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Mật khẩu"
+            />
+          </Form.Item>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            loading={loading}
+            size="large"
+          >
+            ĐĂNG NHẬP <ArrowRightOutlined />
+          </Button>
+        </Form>
+      ),
+    },
+    {
+      key: "register",
+      label: "Đăng ký",
+      children: (
+        <Form
+          layout="vertical"
+          onFinish={handleRegister}
+          size="large"
+        >
+          <Form.Item
+            name="fullName"
+            label="Họ và tên"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="username"
+            label="Tên đăng nhập"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              {
+                required: true,
+                type: "email",
+              },
+            ]}
+          >
+            <Input prefix={<MailOutlined />} />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="Mật khẩu"
+            rules={[
+              {
+                required: true,
+                min: 6,
+              },
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+            />
+          </Form.Item>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            loading={loading}
+            size="large"
+          >
+            TẠO TÀI KHOẢN
+          </Button>
+        </Form>
+      ),
+    },
+  ];
+
   return (
-    <div style={{ height: '100vh', width: '100vw', display: 'flex', backgroundColor: '#f8fafc', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
-      <Row style={{ width: '100%', height: '100%' }}>
-        
-        {/* NỬA TRÁI: Banner công nghệ trường học cực đẹp */}
-        <Col xs={0} md={12} style={{
-          position: 'relative',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '64px',
-          color: '#ffffff'
-        }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: "url('https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1000')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.15,
-            zIndex: 1
-          }} />
-          <div style={{ position: 'relative', zIndex: 2, maxWidth: '500px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <SafetyCertificateOutlined style={{ fontSize: '32px', color: '#38bdf8' }} />
-              <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '1px', color: '#38bdf8' }}>PORTAL TUYỂN SINH GIÁO DỤC</span>
-            </div>
-            <Title level={1} style={{ color: '#fff', margin: '0 0 20px 0', fontSize: '36px', fontWeight: 800, lineHeight: 1.2 }}>
-              Hệ thống Xét tuyển Học bạ Thông minh
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        background: "#f5f7fa",
+      }}
+    >
+      {/* Banner trái */}
+      <div
+        style={{
+          width: "50%",
+          background:
+            "linear-gradient(135deg, #0f172a, #1d4ed8)",
+          color: "#fff",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 40,
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Title
+            level={1}
+            style={{
+              color: "#fff",
+              marginBottom: 10,
+            }}
+          >
+            TUYỂN SINH 2026
+          </Title>
+
+          <Title
+            level={3}
+            style={{ color: "#fff" }}
+          >
+            Đại học ABC
+          </Title>
+
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: 18,
+            }}
+          >
+            Hệ thống xét tuyển học bạ điện tử
+          </Text>
+        </div>
+      </div>
+
+      {/* Form phải */}
+      <div
+        style={{
+          width: "50%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 40,
+        }}
+      >
+        <Card
+          variant="borderless"
+          style={{
+            width: 500,
+            borderRadius: 16,
+            boxShadow:
+              "0 10px 30px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: 24,
+            }}
+          >
+            <Title level={2}>
+              Chào mừng đến hệ thống
             </Title>
-            <Text style={{ color: '#94a3b8', fontSize: '16px', lineHeight: '1.6', display: 'block' }}>
-              Ứng dụng nền tảng công nghệ số hóa quy trình nộp hồ sơ, tự động lọc nguyện vọng phân cấp và tối ưu hóa thời gian phê duyệt cho Hội đồng tuyển sinh.
+
+            <Text type="secondary">
+              Đăng nhập hoặc tạo tài khoản
             </Text>
           </div>
-        </Col>
 
-        {/* NỬA PHẢI: Form đăng nhập/đăng ký dạng CARD PHẲNG cao cấp */}
-        <Col xs={24} md={12} style={{ display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', padding: '40px', backgroundColor: '#ffffff' }}>
-          <div style={{ width: '100%', maxWidth: '420px' }}>
-            <div style={{ marginBottom: '32px' }}>
-              <Title level={2} style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#1e293b' }}>
-                {isRegister ? "Tạo tài khoản mới" : "Chào mừng trở lại"}
-              </Title>
-              <Text type="secondary" style={{ fontSize: '14px' }}>
-                {isRegister ? "Đăng ký làm thí sinh để bắt đầu nộp hồ sơ xét tuyển học bạ" : "Dành cho cả Thí sinh và Quản trị viên hệ thống"}
-              </Text>
-            </div>
-
-            <Tabs 
-              activeKey={isRegister ? "register" : "login"} 
-              onChange={(key) => { setIsRegister(key === "register"); form.resetFields(); }}
-              style={{ marginBottom: '24px' }}
-              items={[
-                { key: "login", label: "ĐĂNG NHẬP HỆ THỐNG" },
-                { key: "register", label: "ĐĂNG KÝ THÍ SINH" }
-              ]}
-            />
-
-            <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
-              {isRegister ? (
-                <>
-                  <Form.Item name="username" rules={[{ required: true, message: "Nhập tài khoản đăng nhập" }]}>
-                    <Input prefix={<UserOutlined style={{ color: '#94a3b8' }} />} placeholder="Tên tài khoản (Username)" size="large" style={{ borderRadius: '6px' }} />
-                  </Form.Item>
-                  <Form.Item name="fullName" rules={[{ required: true, message: "Nhập đầy đủ họ tên" }]}>
-                    <Input prefix={<UserOutlined style={{ color: '#94a3b8' }} />} placeholder="Họ và tên thí sinh" size="large" style={{ borderRadius: '6px' }} />
-                  </Form.Item>
-                  <Form.Item name="phone" rules={[{ required: true, message: "Nhập số điện thoại liên hệ" }]}>
-                    <Input prefix={<PhoneOutlined style={{ color: '#94a3b8' }} />} placeholder="Số điện thoại di động" size="large" style={{ borderRadius: '6px' }} />
-                  </Form.Item>
-                  <Form.Item name="email" rules={[{ required: true, type: 'email', message: "Nhập đúng định dạng email" }]}>
-                    <Input prefix={<MailOutlined style={{ color: '#94a3b8' }} />} placeholder="Địa chỉ Email" size="large" style={{ borderRadius: '6px' }} />
-                  </Form.Item>
-                </>
-              ) : (
-                <Form.Item name="email_or_username" rules={[{ required: true, message: "Vui lòng nhập Email hoặc Tên tài khoản" }]}>
-                  <Input prefix={<MailOutlined style={{ color: '#94a3b8' }} />} placeholder="Email hoặc Tên tài khoản đăng nhập" size="large" style={{ borderRadius: '6px' }} />
-                </Form.Item>
-              )}
-
-              <Form.Item name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}>
-                <Input.Password prefix={<LockOutlined style={{ color: '#94a3b8' }} />} placeholder="Mật khẩu bảo mật" size="large" style={{ borderRadius: '6px' }} />
-              </Form.Item>
-
-              <Form.Item style={{ marginTop: '32px' }}>
-                <Button type="primary" htmlType="submit" block loading={loading} size="large" style={{ fontWeight: 600, height: '45px', backgroundColor: '#2563eb', borderRadius: '6px', border: 'none' }}>
-                  {isRegister ? "Bắt đầu đăng ký" : "Đăng nhập ngay"}
-                </Button>
-              </Form.Item>
-            </Form>
-          </div>
-        </Col>
-
-      </Row>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            centered
+            items={tabItems}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

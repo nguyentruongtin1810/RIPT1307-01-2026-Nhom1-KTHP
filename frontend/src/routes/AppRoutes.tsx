@@ -1,11 +1,13 @@
+// frontend/src/routes/AppRoutes.tsx
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
 import CandidateAuthPage from "../pages/candidate/CandidateAuthPage";
+import CandidateDashboard from "../pages/candidate/CandidateDashboard";
 import CandidateApplicationForm from "../pages/candidate/CandidateApplicationForm";
 import CandidateTrackingPage from "../pages/candidate/CandidateTrackingPage";
-import CandidateDashboard from "../pages/candidate/CandidateDashboard";
-import StudentLayout from "../pages/layouts/StudentLayout";
-import AdminAuthPage from "../pages/admin/AdminAuthPage";
+
+import StudentLayout from "../pages/layouts/StudentLayout";   // ← Đường dẫn đúng
 import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -13,13 +15,11 @@ export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 1. Tuyến đường công khai */}
+        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/candidate/login" replace />} />
         <Route path="/candidate/login" element={<CandidateAuthPage />} />
-        <Route path="/candidate/register" element={<CandidateAuthPage />} />
-        <Route path="/admin/login" element={<AdminAuthPage />} />
 
-        {/* 2. Phân hệ Học sinh (Đã bọc chung vào StudentLayout để hiện Sidebar) */}
+        {/* Student Routes - Có Layout */}
         <Route
           path="/student"
           element={
@@ -34,11 +34,7 @@ export default function AppRoutes() {
           <Route path="tracking" element={<CandidateTrackingPage />} />
         </Route>
 
-        {/* Tự động hướng các link cũ về link cấu trúc Layout mới */}
-        <Route path="/candidate/application" element={<Navigate to="/student/apply" replace />} />
-        <Route path="/candidate/tracking" element={<Navigate to="/student/tracking" replace />} />
-
-        {/* 3. Phân hệ Admin */}
+        {/* Admin Routes */}
         <Route
           path="/admin/dashboard"
           element={
@@ -48,7 +44,7 @@ export default function AppRoutes() {
           }
         />
 
-        {/* 4. Khắc phục link lỗi */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/candidate/login" replace />} />
       </Routes>
     </BrowserRouter>
