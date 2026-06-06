@@ -1,4 +1,4 @@
-import api from "./axiosConfig";
+import api from "./axiosClient";
 
 export type AuthPayload = {
   email: string;
@@ -6,6 +6,7 @@ export type AuthPayload = {
 };
 
 export type RegisterPayload = AuthPayload & {
+  username: string;
   fullName: string;
   phone?: string;
   address?: string;
@@ -22,12 +23,22 @@ export type AuthResponse = {
 };
 
 export async function login(payload: AuthPayload) {
-  const response = await api.post<AuthResponse>("/auth/login", payload);
+  const response = await api.post<AuthResponse>("/auth/login", {
+    identifier: payload.email,
+    password: payload.password
+  });
   return response.data;
 }
 
 export async function register(payload: RegisterPayload) {
-  const response = await api.post<AuthResponse>("/auth/register", payload);
+  // backend expects exact keys: username, email, password, fullName
+  const body = {
+    username: payload.email,
+    email: payload.email,
+    password: payload.password,
+    fullName: payload.fullName
+  };
+  const response = await api.post<AuthResponse>("/auth/register", body);
   return response.data;
 }
 

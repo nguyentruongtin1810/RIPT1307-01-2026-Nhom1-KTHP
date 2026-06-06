@@ -1,4 +1,4 @@
-import api from "./axiosConfig";
+import api from "./axiosClient";
 
 export type CandidateCredentials = {
   email: string;
