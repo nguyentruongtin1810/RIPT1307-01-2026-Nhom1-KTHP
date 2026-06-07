@@ -7,6 +7,7 @@ const studentRoutes = require("./routes/studentRoutes");
 const universityRoutes = require("./routes/universityRoutes");
 const majorRoutes = require("./routes/majorRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
+const candidateRoutes = require("./routes/candidateRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const { errorHandler } = require("./middlewares/errorHandler");
 
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/universities", universityRoutes);
 app.use("/api/majors", majorRoutes);
+app.use("/api/candidate", candidateRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/admin", adminRoutes);
 

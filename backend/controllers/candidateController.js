@@ -1,5 +1,5 @@
-const { findCandidateById } = require("../models/candidateModel");
-const { createApplication, getApplicationByCandidateId } = require("../models/applicationModel");
+const { getCandidateByUserId } = require("../models/candidateModel");
+const { createApplication, getLatestApplicationByCandidateId } = require("../models/applicationModel");
 
 async function submitApplication(req, res) {
   const {
@@ -12,41 +12,39 @@ async function submitApplication(req, res) {
     priority,
     documents
   } = req.body;
-  const candidateId = req.user.userId;
 
   if (!universityId || !majorId || !subjectGroupId || scoreMath == null || scoreLiterature == null || scoreEnglish == null) {
     return res.status(400).json({ message: "Các trường bắt buộc chưa được điền đầy đủ." });
   }
 
-  const candidate = await findCandidateById(candidateId);
+  const candidate = await getCandidateByUserId(req.user.userId);
   if (!candidate) {
     return res.status(404).json({ message: "Thí sinh không tồn tại." });
   }
 
   const application = await createApplication({
-    candidateId,
-    universityId,
-    majorId,
-    subjectGroupId,
-    scoreMath,
-    scoreLiterature,
-    scoreEnglish,
-    priority: priority || "None",
-    documents: Array.isArray(documents) ? documents : []
+    candidateId: candidate.id,
+    majorId: Number(majorId),
+    subjectGroupId: Number(subjectGroupId),
+    scores: {
+      math: Number(scoreMath),
+      literature: Number(scoreLiterature),
+      english: Number(scoreEnglish)
+    },
+    documentUrl: null
   });
 
   return res.status(201).json(application);
 }
 
 async function getApplicationStatus(req, res) {
-  const candidateId = req.user.userId;
-  const candidate = await findCandidateById(candidateId);
+  const candidate = await getCandidateByUserId(req.user.userId);
 
   if (!candidate) {
     return res.status(404).json({ message: "Thí sinh không tồn tại." });
   }
 
-  const application = await getApplicationByCandidateId(candidateId);
+  const application = await getLatestApplicationByCandidateId(candidate.id);
   if (!application) {
     return res.status(404).json({ message: "Không tìm thấy hồ sơ của thí sinh." });
   }
@@ -55,18 +53,21 @@ async function getApplicationStatus(req, res) {
 }
 
 async function getProfile(req, res) {
-  const candidateId = req.user.userId;
-  const candidate = await findCandidateById(candidateId);
+  const candidate = await getCandidateByUserId(req.user.userId);
   if (!candidate) {
     return res.status(404).json({ message: "Thí sinh không tồn tại." });
   }
   return res.json({
-    candidateId: candidate.candidate_id,
+    candidateId: candidate.id,
     fullName: candidate.full_name,
-    email: candidate.email,
+    userId: candidate.user_id,
     phone: candidate.phone,
-    address: candidate.address,
-    createdAt: candidate.created_at
+    gender: candidate.gender,
+    dob: candidate.dob,
+    idCardNumber: candidate.id_card_number,
+    priorityGroup: candidate.priority_group,
+    createdAt: candidate.created_at,
+    updatedAt: candidate.updated_at
   });
 }
 

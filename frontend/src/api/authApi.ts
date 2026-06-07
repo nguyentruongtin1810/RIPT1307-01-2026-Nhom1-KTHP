@@ -22,12 +22,20 @@ export type AuthResponse = {
 };
 
 export async function login(payload: AuthPayload) {
-  const response = await api.post<AuthResponse>("/auth/login", payload);
+  const response = await api.post<AuthResponse>("/auth/login", {
+    identifier: payload.email,
+    password: payload.password
+  });
   return response.data;
 }
 
 export async function register(payload: RegisterPayload) {
-  const response = await api.post<AuthResponse>("/auth/register", payload);
+  const response = await api.post<AuthResponse>("/auth/register", {
+    username: payload.email,
+    email: payload.email,
+    password: payload.password,
+    fullName: payload.fullName
+  });
   return response.data;
 }
 

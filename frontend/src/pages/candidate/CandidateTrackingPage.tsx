@@ -11,10 +11,12 @@ export default function CandidateTrackingPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const statusTag = {
-    Pending: <Tag color="orange">Chờ xử lý</Tag>,
-    Approved: <Tag color="green">Đã duyệt</Tag>,
-    Rejected: <Tag color="red">Từ chối</Tag>
+  type ApplicationStatus = "pending" | "approved" | "rejected";
+
+  const statusTag: Record<ApplicationStatus, React.ReactNode> = {
+    pending: <Tag color="orange">Chờ xử lý</Tag>,
+    approved: <Tag color="green">Đã duyệt</Tag>,
+    rejected: <Tag color="red">Từ chối</Tag>
   };
 
   useEffect(() => {
@@ -54,12 +56,11 @@ export default function CandidateTrackingPage() {
             <Descriptions.Item label="Trường">{application.university}</Descriptions.Item>
             <Descriptions.Item label="Ngành">{application.major}</Descriptions.Item>
             <Descriptions.Item label="Tổ hợp">{application.subject_group}</Descriptions.Item>
-            <Descriptions.Item label="Điểm Toán">{application.score_math}</Descriptions.Item>
-            <Descriptions.Item label="Điểm Ngữ văn">{application.score_literature}</Descriptions.Item>
-            <Descriptions.Item label="Điểm Tiếng Anh">{application.score_english}</Descriptions.Item>
-            <Descriptions.Item label="Điểm tổng">{application.totalScore}</Descriptions.Item>
-            <Descriptions.Item label="Đối tượng ưu tiên">{application.priority}</Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">{statusTag[application.status]}</Descriptions.Item>
+            <Descriptions.Item label="Điểm Toán">{application.scores?.math ?? "-"}</Descriptions.Item>
+            <Descriptions.Item label="Điểm Ngữ văn">{application.scores?.literature ?? "-"}</Descriptions.Item>
+            <Descriptions.Item label="Điểm Tiếng Anh">{application.scores?.english ?? "-"}</Descriptions.Item>
+            <Descriptions.Item label="Tổng điểm">{typeof application.scores === "object" ? [application.scores.math, application.scores.literature, application.scores.english].filter((v) => typeof v === "number").reduce((sum, value) => sum + value, 0) : "-"}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">{statusTag[application.status as ApplicationStatus] ?? <Tag>Không xác định</Tag>}</Descriptions.Item>
           </Descriptions>
         ) : (
           <Typography.Text>Không có hồ sơ để hiển thị.</Typography.Text>
