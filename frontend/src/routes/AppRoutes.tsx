@@ -7,6 +7,7 @@ import CandidateTrackingPage from "../pages/candidate/CandidateTrackingPage";
 import AdminAuthPage from "../pages/admin/AdminAuthPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminApplications from "../pages/admin/AdminApplications";
+import AdminCategories from "../pages/admin/AdminCategories";
 import AuthGuard from "./AuthGuard";
 import StudentLayout from "../layouts/StudentLayout";
 import AdminLayout from "../layouts/AdminLayout";
@@ -93,7 +94,7 @@ export default function AppRoutes() {
           element={
             <AuthGuard role="admin">
               <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
-                <AdminCategoriesPage />
+                <AdminCategories />
               </AdminLayout>
             </AuthGuard>
           }
