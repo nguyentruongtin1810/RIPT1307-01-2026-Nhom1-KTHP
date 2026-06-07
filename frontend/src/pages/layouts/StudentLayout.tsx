@@ -111,11 +111,45 @@ const StudentLayout: React.FC = () => {
                 }}
               >
                 <Space style={{ cursor: 'pointer' }}>
-                  <Avatar size={40} icon={<UserOutlined />} />
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{user?.fullName || "Thí sinh"}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>{user?.email}</div>
-                  </div>
+                  <Space
+  style={{
+    padding: "8px 14px",
+    borderRadius: 12,
+    background: "#f5faff",
+    border: "1px solid #d6e4ff"
+  }}
+>
+
+  <Avatar
+    size={42}
+    style={{
+      backgroundColor: "#1677ff"
+    }}
+  >
+    {user?.fullName?.charAt(0)}
+  </Avatar>
+
+  <div>
+    <div
+      style={{
+        fontWeight: 600,
+        color: "#262626"
+      }}
+    >
+      {user?.fullName}
+    </div>
+
+    <div
+      style={{
+        fontSize: 12,
+        color: "#8c8c8c"
+      }}
+    >
+      Thí sinh
+    </div>
+  </div>
+
+</Space>
                 </Space>
               </Dropdown>
             </Space>

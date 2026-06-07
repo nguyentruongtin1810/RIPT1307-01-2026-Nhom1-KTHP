@@ -48,9 +48,21 @@ const CandidateTrackingPage: React.FC = () => {
     ? [data]
     : []
 );
-    } catch (error) {
-      message.error("Không thể tải dữ liệu theo dõi hồ sơ.");
-    } finally {
+    } catch (error: any) {
+
+  if (
+    error.message?.includes(
+      "Không tìm thấy hồ sơ"
+    )
+  ) {
+    setApplications([]);
+    return;
+  }
+
+  message.error(
+    "Không thể tải dữ liệu theo dõi hồ sơ."
+  );
+} finally {
       setLoading(false);
     }
   };
