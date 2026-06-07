@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Steps, Form, Input, Select, Button, Upload, message, 
-  Card, Row, Col, Typography, Divider, Spin 
+  Card, Row, Col, Typography, Divider 
 } from 'antd';
 import { 
   UserOutlined, BookOutlined, UploadOutlined, 
@@ -12,6 +12,8 @@ import { candidateApi } from '../../api/candidateApi';
 const { Step } = Steps;
 const { Title, Text } = Typography;
 const { Option } = Select;
+
+const STORAGE_KEY = 'candidate_application_form';
 
 const CandidateApplicationForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -25,90 +27,115 @@ const CandidateApplicationForm: React.FC = () => {
 
   useEffect(() => {
     loadMasterData();
+    loadSavedForm();
   }, []);
 
   const loadMasterData = async () => {
-  try {
-    const unis =
-      await candidateApi.getUniversities();
+    try {
+      const unis = await candidateApi.getUniversities();
+      setUniversities(Array.isArray(unis) ? unis : []);
+    } catch (error) {
+      console.error("Load universities error:", error);
+      // Không hiện thông báo lỗi nữa
+    }
+  };
 
-    setUniversities(unis || []);
-  } catch (error) {
-    message.error(
-      "Không thể tải dữ liệu. Vui lòng thử lại!"
-    );
-  }
-};
+  const loadSavedForm = async () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+      const { formValues, step, files, selectedUni, savedMajors, savedSubjectGroups } = JSON.parse(saved);
+      
+      if (formValues) form.setFieldsValue(formValues);
+      if (step !== undefined) setCurrentStep(step);
+      if (files) setFileList(files);
+      if (selectedUni) setSelectedUniId(selectedUni);
+      if (savedMajors) setMajors(savedMajors);
+      if (savedSubjectGroups) setSubjectGroups(savedSubjectGroups);
+    } catch (e) {
+      console.error("Load saved form failed", e);
+    }
+  };
+
+  const saveFormToStorage = () => {
+    const formValues = form.getFieldsValue();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      formValues,
+      step: currentStep,
+      files: fileList,
+      selectedUni: selectedUniId,
+      savedMajors: majors,
+      savedSubjectGroups: subjectGroups
+    }));
+  };
+
+  useEffect(() => {
+    const timeout = setTimeout(saveFormToStorage, 600);
+    return () => clearTimeout(timeout);
+  }, [currentStep, fileList, selectedUniId, majors, subjectGroups]);
 
   const handleUniversityChange = async (uniId: number) => {
     setSelectedUniId(uniId);
     form.setFieldValue('majorId', null);
+    form.setFieldValue('subjectGroupId', null);
     try {
       const data = await candidateApi.getMajorsByUniversity(uniId);
-      setMajors(
-  data.majors || []
-);
+      setMajors(Array.isArray(data) ? data : data?.majors || []);
     } catch (error) {
-      message.error("Không tải được danh sách ngành học");
+      console.error(error);
     }
   };
-  const handleMajorChange = async (
-  majorId: number
-) => {
-  try {
-    const data =
-      await candidateApi.getSubjectGroupsByMajor(
-        majorId
-      );
 
-    setSubjectGroups(
-      data.subjectGroups || []
-    );
-  } catch (error) {
-    message.error(
-      "Không tải được tổ hợp môn"
-    );
-  }
-};
-
-  const next = () => {
-    form.validateFields().then(() => setCurrentStep(currentStep + 1)).catch(() => {});
+  const handleMajorChange = async (majorId: number) => {
+    form.setFieldValue('subjectGroupId', null);
+    try {
+      const data = await candidateApi.getSubjectGroupsByMajor(majorId);
+      setSubjectGroups(Array.isArray(data) ? data : data?.subjectGroups || []);
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  const next = () => form.validateFields().then(() => setCurrentStep(currentStep + 1)).catch(() => {});
 
   const prev = () => setCurrentStep(currentStep - 1);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async () => {
     if (fileList.length === 0) {
-      message.warning("Vui lòng upload ít nhất một tài liệu!");
+      message.warning("Vui lòng upload ít nhất một tài liệu minh chứng!");
       return;
     }
 
     setLoading(true);
     try {
+      const values = await form.validateFields();
+
       const payload = {
-  universityId: values.universityId,
-
-  majorId: values.majorId,
-
-  subjectGroupId: values.subjectGroupId,
-
-  score1: Number(values.score1),
-
-  score2: Number(values.score2),
-
-  score3: Number(values.score3),
-
-  documentUrl: fileList[0]?.name || ""
-};
+        fullName: values.fullName,
+        priorityGroup: values.priorityGroup || "None",
+        universityId: values.universityId,
+        majorId: values.majorId,
+        subjectGroupId: values.subjectGroupId,
+        score1: Number(values.score1),
+        score2: Number(values.score2),
+        score3: Number(values.score3),
+        documentUrl: fileList.map((file: any) => file.name || file.url).join(", ")
+      };
 
       await candidateApi.submitApplication(payload);
 
-      message.success("🎉 Nộp hồ sơ thành công! Hồ sơ của bạn đang được xét duyệt.");
+      message.success("🎉 Nộp hồ sơ thành công!");
+      localStorage.removeItem(STORAGE_KEY);
       form.resetFields();
       setCurrentStep(0);
       setFileList([]);
+      setMajors([]);
+      setSubjectGroups([]);
+      setSelectedUniId(null);
     } catch (error: any) {
-      message.error(error.message || "Nộp hồ sơ thất bại. Vui lòng thử lại.");
+      console.error(error);
+      message.error("Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.");
     } finally {
       setLoading(false);
     }
@@ -119,14 +146,10 @@ const CandidateApplicationForm: React.FC = () => {
       title: 'Thông tin cá nhân',
       icon: <UserOutlined />,
       content: (
-        <Form
-  form={form}
-  layout="vertical"
-  onFinish={handleSubmit}
->
+        <Form form={form} layout="vertical">
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="fullName" label="Họ và tên thí sinh" rules={[{ required: true }]}>
+              <Form.Item name="fullName" label="Họ và tên thí sinh" rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}>
                 <Input size="large" placeholder="Nhập họ và tên đầy đủ" />
               </Form.Item>
             </Col>
@@ -150,19 +173,18 @@ const CandidateApplicationForm: React.FC = () => {
         <Form form={form} layout="vertical">
           <Form.Item name="universityId" label="Chọn Trường Đại học" rules={[{ required: true }]}>
             <Select size="large" placeholder="Chọn trường" onChange={handleUniversityChange}>
-              {universities.map((u: any) => (
-                <Option key={u.id} value={u.id}>{u.name}</Option>
-              ))}
+              {universities.length > 0 ? (
+                universities.map((u: any) => (
+                  <Option key={u.id} value={u.id}>{u.name}</Option>
+                ))
+              ) : (
+                <Option value="" disabled>Đang tải danh sách trường...</Option>
+              )}
             </Select>
           </Form.Item>
 
           <Form.Item name="majorId" label="Chọn Ngành học" rules={[{ required: true }]}>
-            <Select
-  size="large"
-  placeholder="Chọn ngành"
-  disabled={!selectedUniId}
-  onChange={handleMajorChange}
->
+            <Select size="large" placeholder="Chọn ngành" disabled={!selectedUniId} onChange={handleMajorChange}>
               {majors.map((m: any) => (
                 <Option key={m.id} value={m.id}>{m.name} ({m.code})</Option>
               ))}
@@ -246,12 +268,7 @@ const CandidateApplicationForm: React.FC = () => {
       <Divider />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
-        <Button 
-          size="large" 
-          onClick={prev} 
-          disabled={currentStep === 0}
-          icon={<ArrowLeftOutlined />}
-        >
+        <Button size="large" onClick={prev} disabled={currentStep === 0} icon={<ArrowLeftOutlined />}>
           Quay lại
         </Button>
 
@@ -260,13 +277,7 @@ const CandidateApplicationForm: React.FC = () => {
             Tiếp theo
           </Button>
         ) : (
-          <Button 
-            type="primary" 
-            size="large" 
-            loading={loading}
-            onClick={() => form.submit()}
-            style={{ height: 48, fontSize: 16 }}
-          >
+          <Button type="primary" size="large" loading={loading} onClick={handleSubmit} style={{ height: 48, fontSize: 16 }}>
             📤 NỘP HỒ SƠ XÉT TUYỂN
           </Button>
         )}
