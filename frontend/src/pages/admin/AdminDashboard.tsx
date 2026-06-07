@@ -65,23 +65,23 @@ export default function AdminDashboard() {
             <Text type="secondary">Tổng số ứng viên đã nộp hồ sơ tính đến hiện tại.</Text>
           </Card>
         </Col>
-        <Col xs={24} md={12}>
+        <Col xs={24} md={10}>
           <Card loading={loading} bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)" }}>
             <Statistic title="Tỷ lệ duyệt" value={`${approvalRate}%`} />
             <Progress percent={approvalRate} status={approvalRate >= 80 ? "success" : approvalRate >= 50 ? "normal" : "exception"} style={{ marginTop: 16 }} />
           </Card>
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={7}>
           <Card loading={loading} bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)" }}>
             <Statistic title="Chờ xử lý" value={pendingCount} valueStyle={{ color: "#fa8c16" }} />
           </Card>
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={7}>
           <Card loading={loading} bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)" }}>
             <Statistic title="Đã duyệt" value={approvedCount} valueStyle={{ color: "#52c41a" }} />
           </Card>
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={24} md={7}>
           <Card loading={loading} bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)" }}>
             <Statistic title="Đã từ chối" value={rejectedCount} valueStyle={{ color: "#f5222d" }} />
           </Card>

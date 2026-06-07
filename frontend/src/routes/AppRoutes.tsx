@@ -10,6 +10,7 @@ import AdminApplications from "../pages/admin/AdminApplications";
 import AuthGuard from "./AuthGuard";
 import StudentLayout from "../layouts/StudentLayout";
 import AdminLayout from "../layouts/AdminLayout";
+import AdminCategory from "../pages/admin/AdminCategory";
 
 const { Title } = Typography;
 
@@ -17,14 +18,6 @@ function StudentDashboardPage() {
   return (
     <Card className="page-card" title={<Title level={4}>Student Dashboard</Title>}>
       <p>Welcome to the student dashboard.</p>
-    </Card>
-  );
-}
-
-function AdminCategoriesPage() {
-  return (
-    <Card className="page-card" title={<Title level={4}>Admin Categories</Title>}>
-      <p>Manage categories here.</p>
     </Card>
   );
 }
@@ -91,11 +84,11 @@ export default function AppRoutes() {
         <Route
           path="/admin/categories"
           element={
-            <AuthGuard role="admin">
-              <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
-                <AdminCategoriesPage />
-              </AdminLayout>
-            </AuthGuard>
+          <AuthGuard role="admin">
+            <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
+              <AdminCategory />
+            </AdminLayout>
+          </AuthGuard>
           }
         />
 

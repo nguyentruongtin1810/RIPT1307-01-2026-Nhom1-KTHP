@@ -31,16 +31,27 @@ async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await createUser({ username, email, passwordHash, role: "student" });
-  await createCandidateProfile({ userId: user.id, fullName });
+  
+  // SỬA LỖI: Truyền thêm các trường có thể bị thiếu thành null để tránh undefined trong mysql2
+  await createCandidateProfile({ 
+    userId: user.id, 
+    fullName: fullName,
+    phone: null,
+    gender: null,
+    dob: null,
+    idCardNumber: null
+  });
 
   return res.status(201).json(buildTokenResponse(user));
 }
 
 async function login(req, res) {
-  const { identifier, password } = req.body;
+  // SỬA LỖI: Frontend (Login.tsx) gửi lên key là 'email', hỗ trợ lấy cả 'identifier' hoặc 'email'
+  const identifier = req.body.identifier || req.body.email || req.body.username;
+  const password = req.body.password;
 
   if (!identifier || !password) {
-    return res.status(400).json({ message: "identifier and password are required." });
+    return res.status(400).json({ message: "Tài khoản/Email và mật khẩu là bắt buộc." });
   }
 
   const user = await findUserByEmailOrUsername(identifier);

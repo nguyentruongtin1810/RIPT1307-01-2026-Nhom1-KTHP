@@ -15,7 +15,7 @@ export default function AdminApplications() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
-  const [filterUniversity, setFilterUniversity] = useState<number | undefined>(undefined);
+  const [filterUniversity, setFilterUniversity] = useState<any>(undefined);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -42,11 +42,17 @@ export default function AdminApplications() {
   }
 
   const universityOptions = useMemo(() => {
-    return Array.from(
-      new Map(applications.map((item) => [item.university_id, item.university]))
-    ).map(([id, university]) => ({
-      label: university,
-      value: id
+    const optionsMap = new Map();
+    applications.forEach((item) => {
+      // Fallback: Tìm các field có thể chứa ID, nếu không có ID thì dùng luôn tên trường làm value
+      const key = item.university_id || item.universityId || item.university;
+      if (key && item.university) {
+        optionsMap.set(key, item.university);
+      }
+    });
+    return Array.from(optionsMap.entries()).map(([val, label]) => ({
+      label: String(label),
+      value: val
     }));
   }, [applications]);
 
