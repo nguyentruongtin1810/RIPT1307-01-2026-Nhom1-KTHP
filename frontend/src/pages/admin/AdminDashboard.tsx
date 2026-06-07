@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, Col, Progress, Row, Statistic, Typography, message } from "antd";
 import { getAdminStats } from "../../api/adminApi";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const { Title, Text } = Typography;
 
@@ -41,6 +42,20 @@ export default function AdminDashboard() {
     return total ? Math.round((approvedCount / total) * 100) : 0;
   }, [approvedCount, stats]);
 
+  const pieData = [
+    { name: "Đã duyệt", value: approvedCount, color: "#52c41a" },
+    { name: "Chờ xử lý", value: pendingCount, color: "#fa8c16" },
+    { name: "Từ chối", value: rejectedCount, color: "#f5222d" }
+  ];
+
+  const barData = useMemo(() => {
+    if (!stats?.majorUniversityCounts) return [];
+    return stats.majorUniversityCounts.map((item: any) => ({
+      name: `${item.university} - ${item.major}`,
+      "Số lượng": item.count
+    }));
+  }, [stats]);
+
   return (
     <div className="page-shell">
       <Row gutter={[24, 24]}>
@@ -72,19 +87,35 @@ export default function AdminDashboard() {
           </Card>
         </Col>
       </Row>
-      <Card style={{ marginTop: 24, borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)" }}>
-        <Title level={5}>Ứng viên theo trường và ngành</Title>
-        {stats?.majorUniversityCounts?.length ? (
-          stats.majorUniversityCounts.map((item: any) => (
-            <div key={`${item.university}-${item.major}`} style={{ marginBottom: 12 }}>
-              <Text strong>{item.university}</Text> - <Text>{item.major}</Text>
-              <div style={{ color: "rgba(0,0,0,0.45)" }}>{item.count} hồ sơ</div>
-            </div>
-          ))
-        ) : (
-          <Text type="secondary">Không có dữ liệu trường/ngành.</Text>
-        )}
-      </Card>
+
+      <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
+        <Col xs={24} md={10}>
+          <Card title="Tỷ lệ Trạng thái Hồ sơ" bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)", height: "100%" }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
+                  {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+        <Col xs={24} md={14}>
+          <Card title="Số lượng Thí sinh theo Trường / Ngành" bordered={false} style={{ borderRadius: 20, boxShadow: "0 18px 60px rgba(15, 23, 42, 0.08)", height: "100%" }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={barData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="Số lượng" fill="#1890ff" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Button, Card, Layout, Menu, Select, Space, Table, Tag, Typography, message } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { fetchApplications, changeApplicationStatus } from "../../api/adminApi";
+import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -117,17 +118,22 @@ export default function AdminDashboardPage() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={240} theme="light">
-        <div className="logo" style={{ margin: 24, textAlign: "center", fontWeight: 700 }}>
+      <Sider width={240} theme="dark">
+        <div className="logo" style={{ margin: 24, textAlign: "center", fontWeight: 700, color: "#fff", fontSize: "1.2rem" }}>
           Admin Panel
         </div>
-        <Menu mode="inline" defaultSelectedKeys={["1"]} items={[{ key: "1", label: "Quản lý hồ sơ" }]} />
+        <Menu theme="dark" mode="inline" defaultSelectedKeys={["1"]} items={[{ key: "1", label: "Tổng quan" }, { key: "2", label: "Quản lý hồ sơ" }, { key: "3", label: "Danh mục" }]} />
       </Sider>
       <Layout>
-        <Header style={{ background: "#fff", padding: "0 24px" }}>
-          <Title level={4} style={{ margin: 0 }}>
-            Bảng quản lý hồ sơ xét tuyển
-          </Title>
+        <Header style={{ background: "#fff", padding: "0 24px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 1px 4px rgba(0,21,41,.08)" }}>
+          <Title level={4} style={{ margin: 0 }}>Bảng quản trị hệ thống</Title>
+          <Space size="large">
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <UserOutlined style={{ fontSize: "18px" }} />
+              <Typography.Text strong>Quản trị viên</Typography.Text>
+            </div>
+            <Button type="text" icon={<LogoutOutlined />} danger>Đăng xuất</Button>
+          </Space>
         </Header>
         <Content style={{ margin: 24 }}>
           <Card>
