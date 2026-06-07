@@ -11,17 +11,15 @@ export default function CandidateTrackingPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  type ApplicationStatus = "pending" | "approved" | "rejected";
-
-  const statusTag: Record<ApplicationStatus, React.ReactNode> = {
-    pending: <Tag color="orange">Chờ xử lý</Tag>,
-    approved: <Tag color="green">Đã duyệt</Tag>,
-    rejected: <Tag color="red">Từ chối</Tag>
+  const statusTag = {
+    Pending: <Tag color="orange">Chờ xử lý</Tag>,
+    Approved: <Tag color="green">Đã duyệt</Tag>,
+    Rejected: <Tag color="red">Từ chối</Tag>
   };
 
   useEffect(() => {
     if (!getToken() || getUserRole() !== "student") {
-      navigate("/candidate/login");
+      navigate("/login");
       return;
     }
 

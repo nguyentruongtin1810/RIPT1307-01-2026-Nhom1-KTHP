@@ -1,44 +1,98 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import CandidateAuthPage from "../pages/candidate/CandidateAuthPage";
-import CandidateApplicationForm from "../pages/candidate/CandidateApplicationForm";
+import { Card, Typography } from "antd";
+import Login from "../pages/Login";
+import ApplyPage from "../pages/candidate/ApplyPage";
+import StudentDashboard from "../pages/candidate/StudentDashboard";
 import CandidateTrackingPage from "../pages/candidate/CandidateTrackingPage";
 import AdminAuthPage from "../pages/admin/AdminAuthPage";
-import AdminDashboardPage from "../pages/admin/AdminDashboardPage";
-import ProtectedRoute from "./ProtectedRoute";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminApplications from "../pages/admin/AdminApplications";
+import AuthGuard from "./AuthGuard";
+import StudentLayout from "../layouts/StudentLayout";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminCategory from "../pages/admin/AdminCategory";
+
+const { Title } = Typography;
+
+function StudentDashboardPage() {
+  return (
+    <Card className="page-card" title={<Title level={4}>Student Dashboard</Title>}>
+      <p>Welcome to the student dashboard.</p>
+    </Card>
+  );
+}
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/candidate/login" replace />} />
-        <Route path="/candidate/login" element={<CandidateAuthPage />} />
-        <Route path="/candidate/register" element={<CandidateAuthPage />} />
-        <Route
-          path="/candidate/application"
-          element={
-            <ProtectedRoute role="student">
-              <CandidateApplicationForm />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/candidate/tracking"
-          element={
-            <ProtectedRoute role="student">
-              <CandidateTrackingPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/admin/login" element={<AdminAuthPage />} />
+
+        <Route
+          path="/student/dashboard"
+          element={
+            <AuthGuard role="student">
+              <StudentLayout breadcrumbItems={[{ title: "Dashboard" }]}> 
+                <StudentDashboard />
+              </StudentLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/student/apply"
+          element={
+            <AuthGuard role="student">
+              <StudentLayout breadcrumbItems={[{ title: "Nộp hồ sơ" }]}> 
+                <ApplyPage />
+              </StudentLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/student/status"
+          element={
+            <AuthGuard role="student">
+              <StudentLayout breadcrumbItems={[{ title: "Trạng thái" }]}> 
+                <CandidateTrackingPage />
+              </StudentLayout>
+            </AuthGuard>
+          }
+        />
+
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute role="admin">
-              <AdminDashboardPage />
-            </ProtectedRoute>
+            <AuthGuard role="admin">
+              <AdminLayout breadcrumbItems={[{ title: "Thống kê" }]}> 
+                <AdminDashboard />
+              </AdminLayout>
+            </AuthGuard>
           }
         />
-        <Route path="*" element={<Navigate to="/candidate/login" replace />} />
+        <Route
+          path="/admin/applications"
+          element={
+            <AuthGuard role="admin">
+              <AdminLayout breadcrumbItems={[{ title: "Duyệt hồ sơ" }]}> 
+                <AdminApplications />
+              </AdminLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/admin/categories"
+          element={
+          <AuthGuard role="admin">
+            <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
+              <AdminCategory />
+            </AdminLayout>
+          </AuthGuard>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

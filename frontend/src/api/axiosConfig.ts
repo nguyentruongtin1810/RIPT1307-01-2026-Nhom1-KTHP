@@ -1,19 +1,3 @@
-import axios from "axios";
-import { getToken } from "../utils/auth";
+import axiosClient from "./axiosClient";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api",
-  headers: {
-    "Content-Type": "application/json"
-  }
-});
-
-api.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export default api;
+export default axiosClient;
