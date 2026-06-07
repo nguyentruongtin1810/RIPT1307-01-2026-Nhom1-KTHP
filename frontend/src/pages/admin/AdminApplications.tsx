@@ -20,9 +20,11 @@ export default function AdminApplications() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [showRejectReason, setShowRejectReason] = useState(false);
 
   useEffect(() => {
     loadApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus, filterUniversity]);
 
   async function loadApplications() {
@@ -91,6 +93,7 @@ export default function AdminApplications() {
   function openDrawer(application: any) {
     setSelectedApplication(application);
     setRejectionReason("");
+    setShowRejectReason(false);
     setDrawerOpen(true);
   }
 
@@ -121,7 +124,7 @@ export default function AdminApplications() {
 
   return (
     <div className="page-shell">
-      <Card className="page-card" title={<Title level={4}>Quản lý hồ sơ xét tuyển</Title>}>
+      <Card className="page-card" title={<Title level={4} style={{ margin: 0 }}>Quản lý hồ sơ xét tuyển</Title>} style={{ borderRadius: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col xs={24} md={8}>
             <Select
@@ -206,7 +209,7 @@ export default function AdminApplications() {
                   {selectedApplication.scores && typeof selectedApplication.scores === "object" ? (
                     Object.entries(selectedApplication.scores).map(([key, value]) => (
                       <Col span={8} key={key}>
-                        <Card size="small" style={{ textAlign: "center", background: "#f8fafc" }}>
+                        <Card size="small" style={{ textAlign: "center", background: "#f8fafc", borderRadius: 8 }}>
                           <Text strong>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
                           <div style={{ fontSize: 20, color: "#1677ff", fontWeight: "bold" }}>{String(value)}</div>
                         </Card>
@@ -221,27 +224,48 @@ export default function AdminApplications() {
                 <Title level={5}>Tài liệu đính kèm</Title>
                 {attachments.length ? (
                   attachments.map((file: any, index: number) => (
-                    <Card key={index} style={{ marginBottom: 12 }}>
-                      <Text strong>{file.name || `Tài liệu ${index + 1}`}</Text>
-                      <div>{file.type}</div>
-                      <div>{file.size ? `${file.size} bytes` : "Kích thước không xác định"}</div>
+                    <Card key={index} size="small" style={{ marginBottom: 12, borderRadius: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <Text strong>{file.name || `Tài liệu ${index + 1}`}</Text>
+                          <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>{file.size ? `${file.size} bytes` : "Kích thước không xác định"}</div>
+                        </div>
+                        {file.url ? (
+                          <Button type="link" href={file.url} target="_blank">Xem ngay</Button>
+                        ) : (
+                          <Tag color="blue">{file.type}</Tag>
+                        )}
+                      </div>
                     </Card>
                   ))
                 ) : (
-                  <Alert message="Không có tài liệu đính kèm" type="warning" showIcon />
+                  <Alert message="Không có tài liệu đính kèm" type="warning" showIcon style={{ borderRadius: 12 }} />
                 )}
               </Col>
 
               <Col span={8}>
                 <Title level={5}>Quyết định</Title>
-                <Text type="secondary">Nhập lý do nếu từ chối hồ sơ. Hệ thống sẽ gửi email thông báo cho thí sinh.</Text>
-                <TextArea rows={6} style={{ marginTop: 16 }} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Lý do từ chối hồ sơ..." />
-                <Button type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("approved")} style={{ background: "#52c41a", borderColor: "#52c41a", marginTop: 16, width: "100%" }}>
+                <Text type="secondary">Vui lòng kiểm tra kỹ thông tin trước khi duyệt hoặc từ chối hồ sơ.</Text>
+                <Button type="primary" size="large" loading={actionLoading && !showRejectReason} onClick={() => handleStatusChange("approved")} style={{ background: "#52c41a", borderColor: "#52c41a", marginTop: 16, width: "100%", borderRadius: 12 }}>
                   Duyệt hồ sơ
                 </Button>
-                <Button danger type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("rejected")} style={{ marginTop: 12, width: "100%" }}>
-                  Từ chối hồ sơ
-                </Button>
+                
+                {!showRejectReason ? (
+                  <Button danger type="primary" size="large" onClick={() => setShowRejectReason(true)} style={{ marginTop: 12, width: "100%", borderRadius: 12 }}>
+                    Từ chối hồ sơ
+                  </Button>
+                ) : (
+                  <div style={{ marginTop: 16, padding: 16, background: "#fff1f0", borderRadius: 12, border: "1px solid #ffa39e" }}>
+                    <Text type="danger" strong style={{ display: "block", marginBottom: 8 }}>Nhập lý do từ chối (Bắt buộc):</Text>
+                    <TextArea rows={4} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Nhập lý do chi tiết để thông báo cho thí sinh..." style={{ borderRadius: 12 }} />
+                    <Space style={{ marginTop: 12, width: "100%", justifyContent: "flex-end" }}>
+                      <Button onClick={() => setShowRejectReason(false)} style={{ borderRadius: 12 }}>Hủy</Button>
+                      <Button danger type="primary" loading={actionLoading} onClick={() => handleStatusChange("rejected")} style={{ borderRadius: 12 }}>
+                        Xác nhận Từ chối
+                      </Button>
+                    </Space>
+                  </div>
+                )}
               </Col>
             </Row>
           </>

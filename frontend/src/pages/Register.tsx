@@ -1,10 +1,12 @@
 import { Button, Form, Input, notification } from "antd";
 import { useState } from "react";
 import { register } from "../api/authApi";
+import { MailOutlined, LockOutlined, IdcardOutlined, PhoneOutlined } from "@ant-design/icons";
 
 export type RegisterFormValues = {
   fullName: string;
   email: string;
+  phone?: string;
   password: string;
 };
 
@@ -14,94 +16,71 @@ type RegisterProps = {
 
 export default function RegisterForm({ onSuccess }: RegisterProps) {
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
 
   const handleRegister = async (values: RegisterFormValues) => {
     const payload = {
-      fullName: values.fullName,
-      email: values.email,
-      password: values.password,
+      ...values,
       username: values.email
     };
 
-    console.log("Payload sent:", payload);
     setLoading(true);
 
     try {
       await register(payload);
       notification.success({
-        message: "Đăng ký thành công",
-        description: "Tài khoản đã được tạo. Vui lòng đăng nhập để tiếp tục.",
-        duration: 5
+        message: "Đăng ký thành công!",
+        description: "Tài khoản đã được tạo. Vui lòng đăng nhập để tiếp tục."
       });
+      form.resetFields();
       onSuccess();
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || error.message || "Unknown error occurred";
-      console.error("Detailed Auth Error:", error);
-
-      if (error.response) {
-        if (error.response.status === 400) {
-          notification.error({
-            message: "Lỗi Hệ Thống",
-            description: errorMsg,
-            duration: 5
-          });
-        } else {
-          notification.error({
-            message: "Lỗi Hệ Thống",
-            description: errorMsg,
-            duration: 5
-          });
-        }
-      } else if (error.request) {
-        notification.error({
-          message: "Lỗi Hệ Thống",
-          description: "Không thể kết nối đến Server Backend (Cổng 4000) hoặc lỗi CORS!",
-          duration: 5
-        });
-      } else {
-        notification.error({
-          message: "Lỗi Hệ Thống",
-          description: errorMsg,
-          duration: 5
-        });
-      }
+      const errorMsg = error.response?.data?.message || "Đã có lỗi xảy ra trong quá trình đăng ký.";
+      notification.error({ message: "Đăng ký thất bại", description: errorMsg });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Form layout="vertical" onFinish={handleRegister} requiredMark={false}>
+    <Form form={form} layout="vertical" onFinish={handleRegister} size="large">
       <Form.Item
-        label="Họ và tên"
         name="fullName"
-        rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+        rules={[{ required: true, message: "Vui lòng nhập họ và tên!" }]}
       >
-        <Input size="large" placeholder="Nguyễn Văn A" />
+        <Input prefix={<IdcardOutlined />} placeholder="Họ và tên đầy đủ" />
       </Form.Item>
 
       <Form.Item
-        label="Email"
         name="email"
         rules={[
-          { required: true, message: "Vui lòng nhập email" },
-          { type: "email", message: "Email không hợp lệ" }
+          { required: true, message: "Vui lòng nhập email!" },
+          { type: "email", message: "Email không hợp lệ!" }
         ]}
       >
-        <Input size="large" placeholder="email@tuyensinh.edu.vn" />
+        <Input prefix={<MailOutlined />} placeholder="Email" />
+      </Form.Item>
+
+      <Form.Item 
+        name="phone" 
+        rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
+      >
+        <Input prefix={<PhoneOutlined />} placeholder="Số điện thoại" />
       </Form.Item>
 
       <Form.Item
-        label="Mật khẩu"
         name="password"
-        rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
+        rules={[
+          { required: true, message: "Vui lòng nhập mật khẩu!" },
+          { min: 6, message: "Mật khẩu phải có ít nhất 6 ký tự." }
+        ]}
       >
-        <Input.Password size="large" placeholder="********" />
+        <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" size="large" block loading={loading} style={{ borderRadius: 12 }}>
-          Đăng ký thí sinh
+        <Button type="primary" htmlType="submit" block loading={loading} style={{ borderRadius: 12 }}>
+          Đăng ký
         </Button>
       </Form.Item>
     </Form>

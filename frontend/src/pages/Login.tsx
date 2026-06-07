@@ -26,7 +26,7 @@ export default function Login() {
 
   const handleLogin = async (values: LoginFormValues) => {
     const payload = {
-      email: values.emailOrUsername,
+      emailOrUsername: values.emailOrUsername,
       password: values.password
     };
 
@@ -92,7 +92,7 @@ export default function Login() {
       <Col
         span={14}
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #2563eb 45%, #7c3aed 100%)",
+          background: "linear-gradient(135deg, #1890ff 0%, #0050b3 100%)",
           color: "white",
           display: "flex",
           flexDirection: "column",
@@ -116,7 +116,7 @@ export default function Login() {
             <Text style={{ color: "white", fontWeight: 800, fontSize: 28 }}>TS</Text>
           </div>
           <Title style={{ color: "white", fontSize: 52, lineHeight: 1.05, marginBottom: 24 }}>
-            Chào mừng đến với hệ thống tuyển sinh
+            Cổng Thông Tin Tuyển Sinh
           </Title>
           <Text style={{ color: "rgba(255,255,255,0.82)", fontSize: 18, lineHeight: 1.8 }}>
             Đăng nhập hoặc đăng ký thí sinh mới ngay bây giờ để quản lý hồ sơ, nộp xét tuyển và theo dõi tiến trình một cách trực quan và hiệu quả.
@@ -142,7 +142,7 @@ export default function Login() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#f8fafc",
+          background: "#f0f2f5",
           padding: "48px 32px"
         }}
       >
@@ -150,8 +150,8 @@ export default function Login() {
           style={{
             width: "100%",
             maxWidth: 460,
-            borderRadius: 24,
-            boxShadow: "0 24px 80px rgba(15, 23, 42, 0.12)"
+            borderRadius: 12,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
           }}
         >
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -181,7 +181,7 @@ export default function Login() {
                 </Form.Item>
 
                 <Form.Item>
-                  <Button type="primary" htmlType="submit" size="large" block loading={loading} style={{ borderRadius: 12 }}>
+                  <Button type="primary" htmlType="submit" size="large" block loading={loading}>
                     Đăng nhập
                   </Button>
                 </Form.Item>

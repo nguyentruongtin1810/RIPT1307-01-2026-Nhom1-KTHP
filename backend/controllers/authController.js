@@ -17,7 +17,7 @@ function buildTokenResponse(user) {
 }
 
 async function register(req, res) {
-  const { username, email, password, fullName } = req.body;
+  const { username, email, password, fullName, phone } = req.body;
 
   if (!username || !email || !password || !fullName) {
     return res.status(400).json({ message: "username, email, password, and fullName are required." });
@@ -36,7 +36,7 @@ async function register(req, res) {
   await createCandidateProfile({ 
     userId: user.id, 
     fullName: fullName,
-    phone: null,
+    phone: phone || null,
     gender: null,
     dob: null,
     idCardNumber: null

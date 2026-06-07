@@ -199,7 +199,7 @@ export default function ApplyPage() {
 
   return (
     <div className="page-shell">
-      <Card className="page-card" title={<Title level={4}>Nộp hồ sơ xét tuyển</Title>}>
+      <Card className="page-card" title={<Title level={4} style={{ margin: 0 }}>Nộp hồ sơ xét tuyển</Title>} style={{ borderRadius: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
         {!profileLoaded ? (
           <div style={{ textAlign: "center", padding: 48 }}>
             <Text>Đang tải thông tin thí sinh và danh sách trường/ngành...</Text>
@@ -212,10 +212,10 @@ export default function ApplyPage() {
               <Step title="Tài liệu" description="Tải lên hồ sơ" />
             </Steps>
 
-            <Form form={form} layout="vertical">
+            <Form form={form} layout="vertical" size="large">
               {current === 0 && (
-                <>
-                  <Row gutter={16}>
+                <div style={{ padding: "0 16px" }}>
+                  <Row gutter={[24, 16]}>
                     <Col xs={24} md={12}>
                       <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}> 
                         <Input placeholder="Nguyễn Văn A" />
@@ -228,7 +228,7 @@ export default function ApplyPage() {
                     </Col>
                   </Row>
 
-                  <Row gutter={16}>
+                  <Row gutter={[24, 16]}>
                     <Col xs={24} md={12}>
                       <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}> 
                         <Select options={[{ value: "Nam", label: "Nam" }, { value: "Nữ", label: "Nữ" }, { value: "Khác", label: "Khác" }]} placeholder="Chọn giới tính" />
@@ -241,7 +241,7 @@ export default function ApplyPage() {
                     </Col>
                   </Row>
 
-                  <Row gutter={16}>
+                  <Row gutter={[24, 16]}>
                     <Col xs={24} md={12}>
                       <Form.Item name="idCardNumber" label="Số CMND/CCCD" rules={[{ required: true, message: "Vui lòng nhập số CMND/CCCD" }]}> 
                         <Input placeholder="012345678" />
@@ -255,12 +255,12 @@ export default function ApplyPage() {
                   </Row>
 
                   <Alert type="info" message="Bước 1: Kiểm tra lại thông tin cá nhân trước khi chuyển sang lựa chọn trường và tổ hợp." style={{ marginBottom: 24 }} />
-                </>
+                </div>
               )}
 
               {current === 1 && (
-                <>
-                  <Row gutter={16}>
+                <div style={{ padding: "0 16px" }}>
+                  <Row gutter={[24, 16]}>
                     <Col xs={24} md={24}>
                       <Form.Item
                         name="universityPath"
@@ -272,7 +272,7 @@ export default function ApplyPage() {
                           placeholder="Chọn trường, ngành và tổ hợp"
                           style={{ width: "100%" }}
                           onChange={(value, selectedOptions) => {
-                            const code = selectedOptions[selectedOptions.length - 1]?.code || "";
+                            const code = (selectedOptions?.[selectedOptions.length - 1] as any)?.code || "";
                             setSubjectGroupCode(code);
                           }}
                         />
@@ -280,7 +280,7 @@ export default function ApplyPage() {
                     </Col>
                   </Row>
 
-                  <Row gutter={16}>
+                  <Row gutter={[24, 16]}>
                     <Col xs={24} md={12}>
                       <Form.Item name="priority" label="Đối tượng ưu tiên">
                         <Select placeholder="Chọn ưu tiên" options={priorityOptions} />
@@ -288,8 +288,8 @@ export default function ApplyPage() {
                     </Col>
                   </Row>
 
-                  <Text strong>Điểm xét tuyển</Text>
-                  <Row gutter={16} style={{ marginTop: 8 }}>
+                  <Title level={5} style={{ marginTop: 16, marginBottom: 16 }}>Điểm xét tuyển</Title>
+                  <Row gutter={[24, 16]}>
                     {scoreFields.map((field) => (
                       <Col xs={24} md={12} lg={8} key={field.name}>
                         <Form.Item name={field.name} label={field.label} rules={[{ required: true, message: `Vui lòng nhập điểm ${field.label}` }]}> 
@@ -300,40 +300,40 @@ export default function ApplyPage() {
                   </Row>
 
                   <Alert type="warning" message={`Tổ hợp hiện tại: ${subjectGroupCode || "Chưa chọn"}`} style={{ marginBottom: 24 }} />
-                </>
+                </div>
               )}
 
               {current === 2 && (
-                <>
+                <div style={{ padding: "0 16px" }}>
                   <Form.Item label="Tải lên giấy tờ" required>
-                    <Dragger {...uploadProps} style={{ padding: 24 }}>
+                    <Dragger {...uploadProps} style={{ padding: 32, background: "#fafafa", borderRadius: 12 }}>
                       <p className="ant-upload-drag-icon">
-                        <InboxOutlined />
+                        <InboxOutlined style={{ color: "#1890ff" }} />
                       </p>
-                      <p className="ant-upload-text">Kéo thả tệp vào đây hoặc nhấp để tải lên</p>
-                      <p className="ant-upload-hint">Hỗ trợ JPG, PNG, PDF. Tối đa 5 tài liệu.</p>
+                      <p className="ant-upload-text" style={{ fontSize: 16, fontWeight: 500 }}>Kéo thả tệp vào đây hoặc nhấp để tải lên</p>
+                      <p className="ant-upload-hint" style={{ color: "rgba(0,0,0,0.45)" }}>Hỗ trợ JPG, PNG, PDF. Tối đa 5 tài liệu.</p>
                     </Dragger>
                   </Form.Item>
                   <Text type="secondary">Bạn nên tải lên ít nhất CMND/CCCD và bằng tốt nghiệp hoặc học bạ.</Text>
-                </>
+                </div>
               )}
 
-              <Row justify="space-between" style={{ marginTop: 32 }}>
+              <Row justify="space-between" style={{ marginTop: 40, padding: "0 16px" }}>
                 <Col>
                   {current > 0 && (
-                    <Button onClick={handlePrev} style={{ marginRight: 12 }}>
+                    <Button size="large" onClick={handlePrev} style={{ borderRadius: 12 }}>
                       Quay lại
                     </Button>
                   )}
                 </Col>
                 <Col>
                   {current < 2 && (
-                    <Button type="primary" onClick={handleNext}>
+                    <Button type="primary" size="large" onClick={handleNext} style={{ borderRadius: 12 }}>
                       Tiếp theo
                     </Button>
                   )}
                   {current === 2 && (
-                    <Button type="primary" loading={loading} onClick={handleFinish}>
+                    <Button type="primary" size="large" loading={loading} onClick={handleFinish} style={{ borderRadius: 12 }}>
                       Gửi hồ sơ
                     </Button>
                   )}

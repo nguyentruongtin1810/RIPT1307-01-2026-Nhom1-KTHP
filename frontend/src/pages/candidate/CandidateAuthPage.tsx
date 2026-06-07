@@ -22,9 +22,9 @@ export default function CandidateAuthPage() {
           password: values.password
         } as any) // <--- Thêm chữ 'as any' vào đây
         : await login({
-          email: values.email,
+          emailOrUsername: values.email,
           password: values.password
-        } as any); // <--- Thêm chữ 'as any' vào đây
+        });
 
       setToken(response.token);
       setUser(response.user);
