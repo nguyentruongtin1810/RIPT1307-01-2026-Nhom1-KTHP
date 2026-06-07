@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Col, Drawer, Input, message, Row, Select, Space, Image, Table, Tag, Typography, Divider } from "antd";
+import { Button, Card, Col, Drawer, Input, message, Row, Select, Space, Table, Tag, Typography, Divider, Alert } from "antd";
 import { fetchApplications, changeApplicationStatus } from "../../api/adminApi";
 
 const { Title, Text } = Typography;
@@ -32,8 +32,8 @@ export default function AdminApplications() {
         status: filterStatus,
         universityId: filterUniversity
       };
-      const applications = await fetchApplications(query);
-      setApplications(applications.data || []);
+      const result = await fetchApplications(query);
+      setApplications(result.data || []);
     } catch (error: any) {
       message.error(error.response?.data?.message || "Không thể tải danh sách hồ sơ.");
     } finally {
@@ -42,18 +42,13 @@ export default function AdminApplications() {
   }
 
   const universityOptions = useMemo(() => {
-    const optionsMap = new Map();
+    const optionsMap = new Map<any, string>();
     applications.forEach((item) => {
-      // Fallback: Tìm các field có thể chứa ID, nếu không có ID thì dùng luôn tên trường làm value
-      const key = item.university_id || item.universityId || item.university;
-      if (key && item.university) {
-        optionsMap.set(key, item.university);
+      if (item.university && item.university_id != null) {
+        optionsMap.set(item.university_id, item.university);
       }
     });
-    return Array.from(optionsMap.entries()).map(([val, label]) => ({
-      label: String(label),
-      value: val
-    }));
+    return Array.from(optionsMap.entries()).map(([value, label]) => ({ value, label }));
   }, [applications]);
 
   const columns = [
@@ -78,7 +73,7 @@ export default function AdminApplications() {
       dataIndex: "status",
       key: "status",
       render: (status: string) => {
-        const meta = statusTags[status.toLowerCase()] || { color: "default", label: status };
+        const meta = statusTags[status?.toLowerCase()] || { color: "default", label: status };
         return <Tag color={meta.color}>{meta.label}</Tag>;
       }
     },
@@ -122,6 +117,8 @@ export default function AdminApplications() {
     }
   }
 
+  const attachments = selectedApplication?.documents || (selectedApplication?.document_url ? [{ name: "Tài liệu đính kèm", type: "link", url: selectedApplication.document_url }] : []);
+
   return (
     <div className="page-shell">
       <Card className="page-card" title={<Title level={4}>Quản lý hồ sơ xét tuyển</Title>}>
@@ -162,16 +159,14 @@ export default function AdminApplications() {
           loading={loading}
           columns={columns}
           dataSource={applications}
-          onRow={(record) => ({
-            onClick: () => openDrawer(record)
-          })}
+          onRow={(record) => ({ onClick: () => openDrawer(record) })}
           pagination={{ pageSize: 10 }}
         />
       </Card>
 
       <Drawer
         width={1000}
-        title="Duyệt Hồ Sơ Xét Tuyển (Review Center)"
+        title="Duyệt hồ sơ xét tuyển"
         placement="right"
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
@@ -180,38 +175,39 @@ export default function AdminApplications() {
           <>
             <Row gutter={32}>
               <Col span={16} style={{ borderRight: "1px solid #f0f0f0", paddingRight: 24 }}>
-                <Title level={5}>Thông tin Thí sinh & Hồ sơ</Title>
+                <Title level={5}>Thông tin thí sinh & hồ sơ</Title>
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
-                    <Text strong>Họ và tên: </Text> <Text>{selectedApplication.candidate_name}</Text>
+                    <Text strong>Họ và tên:</Text> <Text>{selectedApplication.candidate_name}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Email: </Text> <Text>{selectedApplication.candidate_email}</Text>
+                    <Text strong>Email:</Text> <Text>{selectedApplication.candidate_email}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Trường: </Text> <Text>{selectedApplication.university}</Text>
+                    <Text strong>Trường:</Text> <Text>{selectedApplication.university}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Ngành: </Text> <Text>{selectedApplication.major}</Text>
+                    <Text strong>Ngành:</Text> <Text>{selectedApplication.major}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Tổ hợp: </Text> <Text>{selectedApplication.subject_group}</Text>
+                    <Text strong>Tổ hợp:</Text> <Text>{selectedApplication.subject_group}</Text>
                   </Col>
                   <Col span={12}>
-                    <Text strong>Trạng thái hiện tại: </Text>
+                    <Text strong>Trạng thái:</Text>{" "}
                     <Tag color={statusTags[selectedApplication.status?.toLowerCase()]?.color || "default"}>
                       {statusTags[selectedApplication.status?.toLowerCase()]?.label || selectedApplication.status}
                     </Tag>
                   </Col>
                 </Row>
+
                 <Divider />
-                <Title level={5}>Điểm Xét Tuyển</Title>
+                <Title level={5}>Điểm xét tuyển</Title>
                 <Row gutter={[16, 16]}>
                   {selectedApplication.scores && typeof selectedApplication.scores === "object" ? (
                     Object.entries(selectedApplication.scores).map(([key, value]) => (
                       <Col span={8} key={key}>
                         <Card size="small" style={{ textAlign: "center", background: "#f8fafc" }}>
-                          <Text strong>{key.replace(/score/i, "").toUpperCase()}</Text>
+                          <Text strong>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
                           <div style={{ fontSize: 20, color: "#1677ff", fontWeight: "bold" }}>{String(value)}</div>
                         </Card>
                       </Col>
@@ -220,31 +216,32 @@ export default function AdminApplications() {
                     <Text type="secondary">Không có dữ liệu điểm.</Text>
                   )}
                 </Row>
+
                 <Divider />
-                <Title level={5}>Ảnh Minh Chứng (Tài liệu)</Title>
-                <div style={{ marginTop: 8 }}>
-                  {selectedApplication.document_url ? (
-                    <Image width="100%" style={{ borderRadius: 8, maxHeight: 400, objectFit: "cover" }} src={selectedApplication.document_url} alt="Tài liệu chứng minh" />
-                  ) : (
-                    <Card style={{ textAlign: "center", padding: "20px" }}><Text type="secondary">Không có ảnh tài liệu.</Text></Card>
-                  )}
-                </div>
+                <Title level={5}>Tài liệu đính kèm</Title>
+                {attachments.length ? (
+                  attachments.map((file: any, index: number) => (
+                    <Card key={index} style={{ marginBottom: 12 }}>
+                      <Text strong>{file.name || `Tài liệu ${index + 1}`}</Text>
+                      <div>{file.type}</div>
+                      <div>{file.size ? `${file.size} bytes` : "Kích thước không xác định"}</div>
+                    </Card>
+                  ))
+                ) : (
+                  <Alert message="Không có tài liệu đính kèm" type="warning" showIcon />
+                )}
               </Col>
-              
+
               <Col span={8}>
-                <Title level={5}>Khu Vực Phê Duyệt</Title>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <Text strong>Lý do từ chối (bắt buộc nếu từ chối):</Text>
-                    <TextArea rows={6} style={{ marginTop: 8 }} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Nhập lý do thí sinh bị từ chối hồ sơ..." />
-                  </div>
-                  <Button type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("approved")} style={{ background: "#52c41a", borderColor: "#52c41a", width: "100%" }}>
-                    Duyệt Hồ Sơ
-                  </Button>
-                  <Button danger type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("rejected")} style={{ width: "100%" }}>
-                    Từ Chối Hồ Sơ
-                  </Button>
-                </div>
+                <Title level={5}>Quyết định</Title>
+                <Text type="secondary">Nhập lý do nếu từ chối hồ sơ. Hệ thống sẽ gửi email thông báo cho thí sinh.</Text>
+                <TextArea rows={6} style={{ marginTop: 16 }} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Lý do từ chối hồ sơ..." />
+                <Button type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("approved")} style={{ background: "#52c41a", borderColor: "#52c41a", marginTop: 16, width: "100%" }}>
+                  Duyệt hồ sơ
+                </Button>
+                <Button danger type="primary" size="large" loading={actionLoading} onClick={() => handleStatusChange("rejected")} style={{ marginTop: 12, width: "100%" }}>
+                  Từ chối hồ sơ
+                </Button>
               </Col>
             </Row>
           </>

@@ -19,6 +19,15 @@ async function createCandidateProfile({ userId, fullName, phone = null, gender =
   };
 }
 
+async function updateCandidateProfile(userId, { fullName, phone = null, gender = null, dob = null, idCardNumber = null, priorityGroup = null }) {
+  const pool = getPool();
+  await pool.execute(
+    `UPDATE candidates SET full_name = ?, phone = ?, gender = ?, dob = ?, id_card_number = ?, priority_group = ? WHERE user_id = ?`,
+    [fullName, phone, gender, dob, idCardNumber, priorityGroup, userId]
+  );
+  return getCandidateByUserId(userId);
+}
+
 async function getCandidateByUserId(userId) {
   const pool = getPool();
   const [rows] = await pool.execute(`SELECT * FROM candidates WHERE user_id = ?`, [userId]);
@@ -31,4 +40,4 @@ async function getCandidateById(id) {
   return rows[0] || null;
 }
 
-module.exports = { createCandidateProfile, getCandidateByUserId, getCandidateById };
+module.exports = { createCandidateProfile, updateCandidateProfile, getCandidateByUserId, getCandidateById };

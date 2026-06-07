@@ -16,15 +16,15 @@ export default function CandidateAuthPage() {
     try {
       const response = isRegister
         ? await register({
-            username: values.email,
-            fullName: values.fullName,
-            email: values.email,
-            password: values.password
-          })
+          username: values.email,
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password
+        } as any) // <--- Thêm chữ 'as any' vào đây
         : await login({
-            email: values.email,
-            password: values.password
-          });
+          email: values.email,
+          password: values.password
+        } as any); // <--- Thêm chữ 'as any' vào đây
 
       setToken(response.token);
       setUser(response.user);

@@ -16,7 +16,8 @@ const {
   getMajorById,
   createMajor,
   updateMajor,
-  deleteMajor
+  deleteMajor,
+  getSubjectGroupIdsByMajorId
 } = require("../models/majorModel");
 const {
   getAllSubjectGroups,
@@ -131,7 +132,13 @@ async function listMajors(req, res) {
     universityId: university_id ? Number(university_id) : undefined
   };
   const majors = await getAllMajors(filter);
-  return res.json(majors);
+  const majorsWithGroups = await Promise.all(
+    majors.map(async (major) => ({
+      ...major,
+      subjectGroupIds: await getSubjectGroupIdsByMajorId(major.id)
+    }))
+  );
+  return res.json(majorsWithGroups);
 }
 
 async function createMajorController(req, res) {
@@ -157,7 +164,8 @@ async function getMajorController(req, res) {
   if (!major) {
     return res.status(404).json({ message: "Major not found." });
   }
-  return res.json(major);
+  const subjectGroupIds = await getSubjectGroupIdsByMajorId(id);
+  return res.json({ ...major, subjectGroupIds });
 }
 
 async function updateMajorController(req, res) {

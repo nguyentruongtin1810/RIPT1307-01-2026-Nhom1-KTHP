@@ -1,9 +1,26 @@
-import { Button, Card, Cascader, Col, DatePicker, Form, Input, InputNumber, message, Row, Select, Steps, Typography, Upload } from "antd";
-import type { UploadFile, UploadProps } from "antd/es/upload";
-import { InboxOutlined } from "@ant-design/icons";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchUniversityData, submitApplication } from "../../api/candidateApi";
+import dayjs from "dayjs";
+import {
+  Button,
+  Card,
+  Cascader,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Row,
+  Select,
+  Steps,
+  Typography,
+  Upload,
+  Alert
+} from "antd";
+import type { UploadFile, UploadProps } from "antd/es/upload";
+import { InboxOutlined } from "@ant-design/icons";
+import { fetchUniversityData, getProfile, submitApplication } from "../../api/candidateApi";
 import { getToken, getUserRole } from "../../utils/auth";
 
 const { Title, Text } = Typography;
@@ -12,45 +29,46 @@ const { Dragger } = Upload;
 
 const scoreFieldsByGroup: Record<string, Array<{ name: string; label: string }>> = {
   A00: [
-    { name: "scoreMath", label: "Toán" },
-    { name: "scorePhysics", label: "Vật lý" },
-    { name: "scoreChemistry", label: "Hóa học" }
+    { name: "math", label: "Toán" },
+    { name: "physics", label: "Vật lý" },
+    { name: "chemistry", label: "Hóa học" }
   ],
   A01: [
-    { name: "scoreMath", label: "Toán" },
-    { name: "scorePhysics", label: "Vật lý" },
-    { name: "scoreEnglish", label: "Tiếng Anh" }
+    { name: "math", label: "Toán" },
+    { name: "physics", label: "Vật lý" },
+    { name: "english", label: "Tiếng Anh" }
   ],
   D01: [
-    { name: "scoreMath", label: "Toán" },
-    { name: "scoreLiterature", label: "Ngữ văn" },
-    { name: "scoreEnglish", label: "Tiếng Anh" }
+    { name: "math", label: "Toán" },
+    { name: "literature", label: "Ngữ văn" },
+    { name: "english", label: "Tiếng Anh" }
   ],
   C01: [
-    { name: "scoreLiterature", label: "Ngữ văn" },
-    { name: "scoreHistory", label: "Lịch sử" },
-    { name: "scoreGeography", label: "Địa lý" }
+    { name: "literature", label: "Ngữ văn" },
+    { name: "history", label: "Lịch sử" },
+    { name: "geography", label: "Địa lý" }
   ],
   default: [
-    { name: "scoreMath", label: "Toán" },
-    { name: "scoreLiterature", label: "Ngữ văn" },
-    { name: "scoreEnglish", label: "Tiếng Anh" }
+    { name: "math", label: "Toán" },
+    { name: "literature", label: "Ngữ văn" },
+    { name: "english", label: "Tiếng Anh" }
   ]
 };
 
-const stepFields = [
-  ["fullName", "phone", "idCard", "dob"],
-  ["universityPath", "priority", "scoreMath", "scoreLiterature", "scoreEnglish", "scorePhysics", "scoreChemistry", "scoreHistory", "scoreGeography"],
-  []
+const priorityOptions = [
+  { value: "None", label: "Không ưu tiên" },
+  { value: "Priority 1", label: "Ưu tiên khu vực" },
+  { value: "Priority 2", label: "Ưu tiên đối tượng" }
 ];
 
 export default function ApplyPage() {
   const [form] = Form.useForm();
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [uploadFiles, setUploadFiles] = useState<UploadFile<any>[]>([]);
+  const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [universityOptions, setUniversityOptions] = useState<any[]>([]);
-  const [subjectGroupLabel, setSubjectGroupLabel] = useState<string>("");
+  const [subjectGroupCode, setSubjectGroupCode] = useState<string>("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,27 +77,45 @@ export default function ApplyPage() {
       return;
     }
 
-    async function loadOptions() {
+    async function loadResources() {
       try {
-        const data = await fetchUniversityData();
-        setUniversityOptions(data);
+        const [options, profile] = await Promise.all([fetchUniversityData(), getProfile()]);
+        setUniversityOptions(options);
+        form.setFieldsValue({
+          fullName: profile.fullName,
+          phone: profile.phone,
+          gender: profile.gender,
+          dob: profile.dob ? dayjs(profile.dob) : null,
+          idCardNumber: profile.idCardNumber,
+          priority: profile.priorityGroup || "None"
+        });
       } catch (error: any) {
-        message.error("Không thể tải dữ liệu trường/ngành.");
+        message.error("Không thể tải dữ liệu trường/ngành hoặc thông tin hồ sơ.");
+      } finally {
+        setProfileLoaded(true);
       }
     }
 
-    loadOptions();
-  }, [navigate]);
+    loadResources();
+  }, [form, navigate]);
 
   const scoreFields = useMemo(() => {
-    const match = subjectGroupLabel.match(/A00|A01|D01|C01/);
+    const match = subjectGroupCode.match(/A00|A01|D01|C01/);
     const key = match?.[0] || "default";
     return scoreFieldsByGroup[key] || scoreFieldsByGroup.default;
-  }, [subjectGroupLabel]);
+  }, [subjectGroupCode]);
 
-  const handleStepValidate = async () => {
-    const fields = stepFields[current].filter((name) => !name.startsWith("score") || scoreFields.some((field) => field.name === name));
-    await form.validateFields(fields);
+  const handleNext = async () => {
+    const stepValidation = current === 0 ? ["fullName", "phone", "gender", "dob", "idCardNumber", "priority"] : ["universityPath"];
+    if (current === 1) {
+      await form.validateFields(stepValidation);
+      if (!subjectGroupCode) {
+        message.error("Vui lòng chọn tổ hợp xét tuyển.");
+        return;
+      }
+    }
+
+    await form.validateFields(stepValidation);
     setCurrent((prev) => prev + 1);
   };
 
@@ -87,38 +123,44 @@ export default function ApplyPage() {
 
   const handleFinish = async () => {
     try {
-      const activeScoreFields = scoreFields.map((field) => field.name);
-      await form.validateFields([...stepFields[0], "universityPath", ...activeScoreFields]);
+      const values = await form.validateFields();
+      const universityPath = values.universityPath || [];
+      const [universityId, majorId, subjectGroupId] = universityPath;
+
+      if (!universityId || !majorId || !subjectGroupId) {
+        message.error("Vui lòng chọn trường, ngành và tổ hợp.");
+        return;
+      }
 
       if (!uploadFiles.length) {
         message.error("Vui lòng tải lên ít nhất một tài liệu.");
         return;
       }
 
-      const values = form.getFieldsValue();
-      const [universityId, majorId, subjectGroupId] = values.universityPath || [];
-      if (!universityId || !majorId || !subjectGroupId) {
-        message.error("Vui lòng chọn trường, ngành và tổ hợp.");
-        return;
-      }
+      const scores = scoreFields.reduce((acc, field) => {
+        acc[field.name] = Number(values[field.name] ?? 0);
+        return acc;
+      }, {} as Record<string, number>);
 
       const payload = {
         universityId,
         majorId,
         subjectGroupId,
-        scoreMath: values.scoreMath ?? 0,
-        scoreLiterature: values.scoreLiterature ?? 0,
-        scoreEnglish: values.scoreEnglish ?? 0,
-        scorePhysics: values.scorePhysics ?? 0,
-        scoreChemistry: values.scoreChemistry ?? 0,
-        scoreHistory: values.scoreHistory ?? 0,
-        scoreGeography: values.scoreGeography ?? 0,
+        scores,
         priority: values.priority || "None",
         documents: uploadFiles.map((file) => ({
           name: file.name,
           type: file.type || "application/octet-stream",
           size: file.size || 0
-        }))
+        })),
+        profile: {
+          fullName: values.fullName,
+          phone: values.phone,
+          gender: values.gender,
+          dob: values.dob ? values.dob.format("YYYY-MM-DD") : "",
+          idCardNumber: values.idCardNumber,
+          priorityGroup: values.priority || "None"
+        }
       };
 
       setLoading(true);
@@ -128,8 +170,6 @@ export default function ApplyPage() {
     } catch (error: any) {
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
-      } else if (error.errorFields) {
-        // validation failure, ignore because form will display errors
       } else {
         message.error("Lỗi gửi hồ sơ. Vui lòng thử lại sau.");
       }
@@ -138,14 +178,14 @@ export default function ApplyPage() {
     }
   };
 
-  const uploadProps: UploadProps<UploadFile<any>> = {
+  const uploadProps: UploadProps<UploadFile> = {
     multiple: true,
     accept: "image/*,application/pdf",
-    beforeUpload: (file: UploadFile<any>) => {
+    beforeUpload: (file) => {
       setUploadFiles((current) => [...current, file]);
       return false;
     },
-    onRemove: (file: UploadFile<any>) => {
+    onRemove: (file) => {
       setUploadFiles((current) => current.filter((item) => item.uid !== file.uid));
     },
     fileList: uploadFiles.map((file, index) => ({
@@ -160,127 +200,148 @@ export default function ApplyPage() {
   return (
     <div className="page-shell">
       <Card className="page-card" title={<Title level={4}>Nộp hồ sơ xét tuyển</Title>}>
-        <Steps current={current} style={{ marginBottom: 32 }}>
-          <Step title="Thông tin" description="Thông tin cá nhân" />
-          <Step title="Lựa chọn" description="Chọn trường, ngành và điểm" />
-          <Step title="Tài liệu" description="Tải lên giấy tờ" />
-        </Steps>
+        {!profileLoaded ? (
+          <div style={{ textAlign: "center", padding: 48 }}>
+            <Text>Đang tải thông tin thí sinh và danh sách trường/ngành...</Text>
+          </div>
+        ) : (
+          <>
+            <Steps current={current} style={{ marginBottom: 32 }}>
+              <Step title="Thông tin" description="Thông tin cá nhân" />
+              <Step title="Lựa chọn" description="Trường, ngành, điểm" />
+              <Step title="Tài liệu" description="Tải lên hồ sơ" />
+            </Steps>
 
-        <Form form={form} layout="vertical">
-          {current === 0 && (
-            <>
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}> 
-                    <Input placeholder="Nguyễn Văn A" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}> 
-                    <Input placeholder="0901 234 567" />
-                  </Form.Item>
-                </Col>
-              </Row>
+            <Form form={form} layout="vertical">
+              {current === 0 && (
+                <>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}> 
+                        <Input placeholder="Nguyễn Văn A" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}> 
+                        <Input placeholder="0901 234 567" />
+                      </Form.Item>
+                    </Col>
+                  </Row>
 
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item name="idCard" label="Số CMND/CCCD" rules={[{ required: true, message: "Vui lòng nhập số CMND/CCCD" }]}> 
-                    <Input placeholder="012345678" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item name="dob" label="Ngày sinh" rules={[{ required: true, message: "Vui lòng chọn ngày sinh" }]}> 
-                    <DatePicker style={{ width: "100%" }} />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </>
-          )}
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: "Vui lòng chọn giới tính" }]}> 
+                        <Select options={[{ value: "Nam", label: "Nam" }, { value: "Nữ", label: "Nữ" }, { value: "Khác", label: "Khác" }]} placeholder="Chọn giới tính" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="dob" label="Ngày sinh" rules={[{ required: true, message: "Vui lòng chọn ngày sinh" }]}> 
+                        <DatePicker style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Col>
+                  </Row>
 
-          {current === 1 && (
-            <>
-              <Row gutter={16}>
-                <Col xs={24} md={24}>
-                  <Form.Item
-                    name="universityPath"
-                    label="Trường / Ngành / Tổ hợp"
-                    rules={[{ required: true, message: "Vui lòng chọn trường, ngành và tổ hợp" }]}
-                  >
-                    <Cascader
-                      options={universityOptions}
-                      placeholder="Chọn trường, ngành và tổ hợp"
-                      style={{ width: "100%" }}
-                      onChange={(value, selectedOptions) => {
-                        const label = selectedOptions[selectedOptions.length - 1]?.label?.toString() || "";
-                        setSubjectGroupLabel(label);
-                      }}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="idCardNumber" label="Số CMND/CCCD" rules={[{ required: true, message: "Vui lòng nhập số CMND/CCCD" }]}> 
+                        <Input placeholder="012345678" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="priority" label="Đối tượng ưu tiên" rules={[{ required: true, message: "Vui lòng chọn đối tượng ưu tiên" }]}> 
+                        <Select options={priorityOptions} placeholder="Chọn ưu tiên" />
+                      </Form.Item>
+                    </Col>
+                  </Row>
 
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item name="priority" label="Đối tượng ưu tiên">
-                    <Select placeholder="Chọn ưu tiên" options={[{ value: "None", label: "Không" }, { value: "Priority 1", label: "Priority 1" }, { value: "Priority 2", label: "Priority 2" }]} />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Text strong>Điểm xét tuyển</Text>
-              <Row gutter={16} style={{ marginTop: 8 }}>
-                {scoreFields.map((field) => (
-                  <Col xs={24} md={12} lg={8} key={field.name}>
-                    <Form.Item
-                      name={field.name}
-                      label={field.label}
-                      rules={[{ required: true, message: `Vui lòng nhập điểm ${field.label}` }]}
-                    >
-                      <InputNumber style={{ width: "100%" }} min={0} max={10} step={0.1} />
-                    </Form.Item>
-                  </Col>
-                ))}
-              </Row>
-            </>
-          )}
-
-          {current === 2 && (
-            <>
-              <Form.Item label="Tải lên giấy tờ" required>
-                <Dragger {...uploadProps} style={{ padding: 24 }}>
-                  <p className="ant-upload-drag-icon">
-                    <InboxOutlined />
-                  </p>
-                  <p className="ant-upload-text">Kéo thả tệp vào đây hoặc nhấp để tải lên</p>
-                  <p className="ant-upload-hint">Hỗ trợ JPG, PNG, PDF. Tối đa 5 tài liệu.</p>
-                </Dragger>
-              </Form.Item>
-              <Text type="secondary">Bạn nên tải lên ít nhất CMND/CCCD và học bạ để hoàn tất hồ sơ.</Text>
-            </>
-          )}
-
-          <Row justify="space-between" style={{ marginTop: 32 }}>
-            <Col>
-              {current > 0 && (
-                <Button onClick={handlePrev} style={{ marginRight: 12 }}>
-                  Quay lại
-                </Button>
+                  <Alert type="info" message="Bước 1: Kiểm tra lại thông tin cá nhân trước khi chuyển sang lựa chọn trường và tổ hợp." style={{ marginBottom: 24 }} />
+                </>
               )}
-            </Col>
-            <Col>
-              {current < 2 && (
-                <Button type="primary" onClick={handleStepValidate}>
-                  Tiếp theo
-                </Button>
+
+              {current === 1 && (
+                <>
+                  <Row gutter={16}>
+                    <Col xs={24} md={24}>
+                      <Form.Item
+                        name="universityPath"
+                        label="Trường / Ngành / Tổ hợp"
+                        rules={[{ required: true, message: "Vui lòng chọn trường, ngành và tổ hợp" }]}
+                      >
+                        <Cascader
+                          options={universityOptions}
+                          placeholder="Chọn trường, ngành và tổ hợp"
+                          style={{ width: "100%" }}
+                          onChange={(value, selectedOptions) => {
+                            const code = selectedOptions[selectedOptions.length - 1]?.code || "";
+                            setSubjectGroupCode(code);
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item name="priority" label="Đối tượng ưu tiên">
+                        <Select placeholder="Chọn ưu tiên" options={priorityOptions} />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+
+                  <Text strong>Điểm xét tuyển</Text>
+                  <Row gutter={16} style={{ marginTop: 8 }}>
+                    {scoreFields.map((field) => (
+                      <Col xs={24} md={12} lg={8} key={field.name}>
+                        <Form.Item name={field.name} label={field.label} rules={[{ required: true, message: `Vui lòng nhập điểm ${field.label}` }]}> 
+                          <InputNumber style={{ width: "100%" }} min={0} max={10} step={0.1} />
+                        </Form.Item>
+                      </Col>
+                    ))}
+                  </Row>
+
+                  <Alert type="warning" message={`Tổ hợp hiện tại: ${subjectGroupCode || "Chưa chọn"}`} style={{ marginBottom: 24 }} />
+                </>
               )}
+
               {current === 2 && (
-                <Button type="primary" loading={loading} onClick={handleFinish}>
-                  Gửi hồ sơ
-                </Button>
+                <>
+                  <Form.Item label="Tải lên giấy tờ" required>
+                    <Dragger {...uploadProps} style={{ padding: 24 }}>
+                      <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                      </p>
+                      <p className="ant-upload-text">Kéo thả tệp vào đây hoặc nhấp để tải lên</p>
+                      <p className="ant-upload-hint">Hỗ trợ JPG, PNG, PDF. Tối đa 5 tài liệu.</p>
+                    </Dragger>
+                  </Form.Item>
+                  <Text type="secondary">Bạn nên tải lên ít nhất CMND/CCCD và bằng tốt nghiệp hoặc học bạ.</Text>
+                </>
               )}
-            </Col>
-          </Row>
-        </Form>
+
+              <Row justify="space-between" style={{ marginTop: 32 }}>
+                <Col>
+                  {current > 0 && (
+                    <Button onClick={handlePrev} style={{ marginRight: 12 }}>
+                      Quay lại
+                    </Button>
+                  )}
+                </Col>
+                <Col>
+                  {current < 2 && (
+                    <Button type="primary" onClick={handleNext}>
+                      Tiếp theo
+                    </Button>
+                  )}
+                  {current === 2 && (
+                    <Button type="primary" loading={loading} onClick={handleFinish}>
+                      Gửi hồ sơ
+                    </Button>
+                  )}
+                </Col>
+              </Row>
+            </Form>
+          </>
+        )}
       </Card>
     </div>
   );

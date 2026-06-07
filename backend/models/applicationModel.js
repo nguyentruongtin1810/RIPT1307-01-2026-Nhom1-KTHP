@@ -1,10 +1,20 @@
 const { getPool } = require("../config/db");
 
-async function createApplication({ candidateId, majorId, subjectGroupId, scores, documentUrl }) {
+function parseDocuments(rawData) {
+  if (!rawData) return [];
+  if (typeof rawData !== "string") return rawData;
+  try {
+    return JSON.parse(rawData);
+  } catch {
+    return [rawData];
+  }
+}
+
+async function createApplication({ candidateId, majorId, subjectGroupId, scores, documents = [] }) {
   const pool = getPool();
   const [result] = await pool.execute(
     `INSERT INTO applications (candidate_id, major_id, subject_group_id, scores, document_url, status) VALUES (?, ?, ?, ?, ?, 'pending')`,
-    [candidateId, majorId, subjectGroupId, JSON.stringify(scores), documentUrl || null]
+    [candidateId, majorId, subjectGroupId, JSON.stringify(scores), JSON.stringify(documents)]
   );
   return getApplicationById(result.insertId);
 }
@@ -47,6 +57,7 @@ async function getApplicationById(id) {
 
   const application = rows[0];
   application.scores = typeof application.scores === "string" ? JSON.parse(application.scores) : application.scores;
+  application.documents = parseDocuments(application.document_url);
   return application;
 }
 
@@ -90,6 +101,7 @@ async function getLatestApplicationByCandidateId(candidateId) {
 
   const application = rows[0];
   application.scores = typeof application.scores === "string" ? JSON.parse(application.scores) : application.scores;
+  application.documents = parseDocuments(application.document_url);
   return application;
 }
 
@@ -173,7 +185,8 @@ async function getApplications({ universityId, majorId, status, page = 1, pageSi
     pageSize,
     data: rows.map((row) => ({
       ...row,
-      scores: typeof row.scores === "string" ? JSON.parse(row.scores) : row.scores
+      scores: typeof row.scores === "string" ? JSON.parse(row.scores) : row.scores,
+      documents: parseDocuments(row.document_url)
     }))
   };
 }

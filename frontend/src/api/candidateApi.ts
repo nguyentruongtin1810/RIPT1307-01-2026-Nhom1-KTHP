@@ -1,36 +1,23 @@
 import api from "./axiosClient";
 
-export type CandidateCredentials = {
-  email: string;
-  password: string;
-};
-
-export type CandidateRegisterPayload = CandidateCredentials & {
+export type CandidateProfile = {
   fullName: string;
-  phone?: string;
-  address?: string;
+  phone: string;
+  gender: string;
+  dob: string;
+  idCardNumber: string;
+  priorityGroup: string;
 };
 
 export type ApplicationPayload = {
   universityId: number;
   majorId: number;
   subjectGroupId: number;
-  scoreMath: number;
-  scoreLiterature: number;
-  scoreEnglish: number;
+  scores: Record<string, number>;
   priority: string;
   documents: Array<{ name: string; type: string; size: number }>;
+  profile: CandidateProfile;
 };
-
-export async function loginCandidate(payload: CandidateCredentials) {
-  const response = await api.post("/auth/login", payload);
-  return response.data;
-}
-
-export async function registerCandidate(payload: CandidateRegisterPayload) {
-  const response = await api.post("/auth/register", payload);
-  return response.data;
-}
 
 export async function fetchUniversityData() {
   const response = await api.get("/public/university-data");
@@ -43,6 +30,16 @@ export async function submitApplication(payload: ApplicationPayload) {
 }
 
 export async function getApplicationStatus() {
-  const response = await api.get("/candidate/application");
+  const response = await api.get("/student/application/my-status");
+  return response.data;
+}
+
+export async function getProfile() {
+  const response = await api.get("/candidate/profile");
+  return response.data;
+}
+
+export async function getStudentDashboard() {
+  const response = await api.get("/student/dashboard");
   return response.data;
 }

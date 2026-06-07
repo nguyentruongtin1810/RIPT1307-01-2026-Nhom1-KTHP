@@ -1,34 +1,22 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { Card, Typography } from "antd";
-import Login from "../pages/Login";
+import AuthContainer from "../pages/AuthContainer";
 import ApplyPage from "../pages/candidate/ApplyPage";
 import StudentDashboard from "../pages/candidate/StudentDashboard";
 import CandidateTrackingPage from "../pages/candidate/CandidateTrackingPage";
-import AdminAuthPage from "../pages/admin/AdminAuthPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminApplications from "../pages/admin/AdminApplications";
+import AdminCategories from "../pages/admin/AdminCategories";
 import AuthGuard from "./AuthGuard";
 import StudentLayout from "../layouts/StudentLayout";
 import AdminLayout from "../layouts/AdminLayout";
-import AdminCategory from "../pages/admin/AdminCategory";
-
-const { Title } = Typography;
-
-function StudentDashboardPage() {
-  return (
-    <Card className="page-card" title={<Title level={4}>Student Dashboard</Title>}>
-      <p>Welcome to the student dashboard.</p>
-    </Card>
-  );
-}
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin/login" element={<AdminAuthPage />} />
+        <Route path="/login" element={<AuthContainer />} />
+        <Route path="/admin/login" element={<Navigate to="/login" replace />} />
 
         <Route
           path="/student/dashboard"
@@ -84,11 +72,11 @@ export default function AppRoutes() {
         <Route
           path="/admin/categories"
           element={
-          <AuthGuard role="admin">
-            <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
-              <AdminCategory />
-            </AdminLayout>
-          </AuthGuard>
+            <AuthGuard role="admin">
+              <AdminLayout breadcrumbItems={[{ title: "Trường/Ngành" }]}> 
+                <AdminCategories />
+              </AdminLayout>
+            </AuthGuard>
           }
         />
 
