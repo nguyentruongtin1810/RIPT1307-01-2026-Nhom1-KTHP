@@ -53,7 +53,7 @@ export default function CandidateApplicationForm() {
 
     setLoading(true);
     try {
-      await submitApplication(payload);
+      await submitApplication(payload as any);
       message.success("Hồ sơ của bạn đã được gửi thành công.");
       navigate("/candidate/tracking");
     } catch (error: any) {
