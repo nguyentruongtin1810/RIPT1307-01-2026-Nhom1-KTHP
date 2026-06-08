@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:4000/api",
+  baseURL: "https://ript1307-01-2026-nhom1-kthp.onrender.com/api",
   headers: {
     "Content-Type": "application/json"
   }
