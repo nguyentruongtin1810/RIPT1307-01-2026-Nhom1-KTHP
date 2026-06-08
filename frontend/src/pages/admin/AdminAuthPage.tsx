@@ -16,7 +16,7 @@ export default function AdminAuthPage() {
       const response = await login({
         email: values.email,
         password: values.password
-      });
+      } as any);
 
       if (response.user.role !== "admin") {
         message.error("Tài khoản không có quyền quản trị.");
